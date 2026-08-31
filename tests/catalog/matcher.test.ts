@@ -27,8 +27,9 @@ describe("tracked item matcher", () => {
   it("matches only an exact official code", () => {
     const result = matchTrackedItems([row("10.100.1001")], [item("10.100.1001")]);
 
-    expect(result.matched).toHaveLength(1);
-    expect(result.matched[0]).toMatchObject({
+    expect(result.matched).toEqual([row("10.100.1001")]);
+    expect(result.matchedItems).toHaveLength(1);
+    expect(result.matchedItems[0]).toMatchObject({
       item: { id: "construction-stone-mason", displayName: "Taşcı ustası" },
       row: { officialCode: "10.100.1001", priceTry: 354.41 },
     });
@@ -40,6 +41,7 @@ describe("tracked item matcher", () => {
     const result = matchTrackedItems([row("10.100.1001")], [tracked]);
 
     expect(result.matched).toEqual([]);
+    expect(result.matchedItems).toEqual([]);
     expect(result.unmatched).toEqual([{ item: tracked, reason: "official-code-not-present" }]);
   });
 });

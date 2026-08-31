@@ -6,7 +6,8 @@ export interface MatchedTrackedItem {
 }
 
 export interface TrackedItemMatchResult {
-  matched: MatchedTrackedItem[];
+  matched: OfficialPriceRow[];
+  matchedItems: MatchedTrackedItem[];
   unmatched: UnmatchedTrackedItem[];
 }
 
@@ -16,7 +17,8 @@ export function matchTrackedItems(
 ): TrackedItemMatchResult {
   const byOfficialCode = new Map<string, TrackedItem[]>();
   const matchedIds = new Set<string>();
-  const matched: MatchedTrackedItem[] = [];
+  const matched: OfficialPriceRow[] = [];
+  const matchedItems: MatchedTrackedItem[] = [];
 
   for (const item of items) {
     const withCode = byOfficialCode.get(item.officialCode) ?? [];
@@ -31,11 +33,13 @@ export function matchTrackedItems(
     if (!item) continue;
 
     matchedIds.add(item.id);
-    matched.push({ item, row });
+    matched.push(row);
+    matchedItems.push({ item, row });
   }
 
   return {
     matched,
+    matchedItems,
     unmatched: items
       .filter((item) => !matchedIds.has(item.id))
       .map((item) => ({ item, reason: "official-code-not-present" })),

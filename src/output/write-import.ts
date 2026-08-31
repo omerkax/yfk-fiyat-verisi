@@ -1,5 +1,5 @@
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { TrackedItemMatchResult } from "../catalog/matcher.js";
 import type { ImportManifest, OfficialPriceRow } from "../types.js";
@@ -22,19 +22,23 @@ export async function writeImport(
   matches: TrackedItemMatchResult,
 ): Promise<void> {
   const parentDir = dirname(outputDir);
-  const temporaryDir = join(parentDir, `.${outputDir.split("/").at(-1)}.tmp-${randomUUID()}`);
+  const temporaryDir = join(parentDir, `.${basename(outputDir)}.tmp-${randomUUID()}`);
 
   await mkdir(parentDir, { recursive: true });
   await mkdir(temporaryDir);
 
   try {
-    await Promise.all([
+    const writes = [
       writeJson(join(temporaryDir, "manifest.json"), manifest),
       writeJson(join(temporaryDir, "official-price-rows.json"), rows),
       writeFile(join(temporaryDir, "official-price-rows.csv"), toCsv(rows), "utf8"),
-      writeJson(join(temporaryDir, "tracked-prices.json"), matches.matched),
+      writeJson(join(temporaryDir, "tracked-prices.json"), matches.matchedItems),
       writeJson(join(temporaryDir, "unmatched-tracked-items.json"), matches.unmatched),
-    ]);
+    ];
+    const writeResults = await Promise.allSettled(writes);
+    const failure = writeResults.find((result) => result.status === "rejected");
+    if (failure?.status === "rejected") throw failure.reason;
+
     await rename(temporaryDir, outputDir);
   } catch (error) {
     await rm(temporaryDir, { recursive: true, force: true });
