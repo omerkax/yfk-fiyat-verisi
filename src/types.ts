@@ -8,12 +8,13 @@ export const SOURCE_CATEGORIES = [
 ] as const;
 
 export type SourceCategory = (typeof SOURCE_CATEGORIES)[number];
+export type SourceDocumentCategory = SourceCategory | "combined";
 export type SourceFormat = "xlsx" | "csv" | "html" | "pdf";
 
 export interface SourceDocument {
   year: number;
   month: number;
-  category: SourceCategory;
+  category: SourceDocumentCategory;
   sourceUrl: string;
   format: SourceFormat;
   discoveredFromUrl: string;

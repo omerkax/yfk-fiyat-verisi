@@ -95,4 +95,21 @@ describe("import artifact writer", () => {
     expect(await fs.readdir(parentDir)).toEqual([]);
     await expect(fs.readFile(join(outputDir, "manifest.json"), "utf8")).rejects.toThrow();
   });
+
+  it("does not overwrite a pre-existing completed import", async () => {
+    const parentDir = await fs.mkdtemp(join(tmpdir(), "yfk-write-import-existing-"));
+    cleanup.push(parentDir);
+    const outputDir = join(parentDir, "2026-08");
+    await fs.mkdir(outputDir);
+    await fs.writeFile(join(outputDir, "manifest.json"), "completed import\n", "utf8");
+    const matches = { matched: [priceRow], matchedItems: [{ item: trackedItem, row: priceRow }], unmatched: [] };
+
+    await expect(writeImport(outputDir, manifest, [priceRow], matches)).rejects.toThrow(
+      "Import already exists",
+    );
+    await expect(fs.readFile(join(outputDir, "manifest.json"), "utf8")).resolves.toBe(
+      "completed import\n",
+    );
+    expect(await fs.readdir(parentDir)).toEqual(["2026-08"]);
+  });
 });

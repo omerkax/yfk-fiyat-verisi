@@ -4,6 +4,16 @@ const MAX_REDIRECTS = 5;
 
 export class OfficialFetcher {
   async fetchText(url: string): Promise<string> {
+    const response = await this.fetchOfficial(url);
+    return response.text();
+  }
+
+  async fetchBytes(url: string): Promise<Uint8Array> {
+    const response = await this.fetchOfficial(url);
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
+  private async fetchOfficial(url: string): Promise<Response> {
     let currentUrl = resolveOfficialUrl(url);
     const signal = AbortSignal.timeout(OFFICIAL_TIMEOUT_MS);
 
@@ -22,7 +32,7 @@ export class OfficialFetcher {
       }
 
       if (!response.ok) throw new Error(`Official source returned HTTP ${response.status}: ${currentUrl}`);
-      return response.text();
+      return response;
     }
 
     throw new Error(`Official source exceeded ${MAX_REDIRECTS} redirects: ${url}`);

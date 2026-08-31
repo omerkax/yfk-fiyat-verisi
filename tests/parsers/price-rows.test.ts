@@ -1,6 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { parseTurkishPrice, toOfficialRows } from "../../src/parsers/price-rows.js";
+import {
+  parseTurkishPrice,
+  toOfficialRows,
+  toOfficialRowsWithReport,
+} from "../../src/parsers/price-rows.js";
+import { parseSourceDocument } from "../../src/parsers/parser.js";
 import type { SourceDocument } from "../../src/types.js";
 
 const augustDocument: SourceDocument = {
@@ -16,6 +21,26 @@ const fixtureCells = async () => (await readFile(
   new URL("../fixtures/august-construction-rayic.txt", import.meta.url),
   "utf8",
 )).trim().split("\n").map((line) => line.split("\t"));
+
+const blankPdf = (): Uint8Array => {
+  const objects = [
+    "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+    "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+    "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources <<>> /Contents 4 0 R >>\nendobj\n",
+    "4 0 obj\n<< /Length 0 >>\nstream\n\nendstream\nendobj\n",
+  ];
+  let body = "%PDF-1.4\n";
+  const offsets = objects.map((object) => {
+    const offset = new TextEncoder().encode(body).byteLength;
+    body += object;
+    return offset;
+  });
+  const xrefOffset = new TextEncoder().encode(body).byteLength;
+  body += `xref\n0 5\n0000000000 65535 f \n${offsets.map((offset) => (
+    `${String(offset).padStart(10, "0")} 00000 n \n`
+  )).join("")}trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+  return new TextEncoder().encode(body);
+};
 
 describe("official price rows", () => {
   it("parses comma-decimal prices and rejects ambiguous values", () => {
@@ -66,5 +91,43 @@ describe("official price rows", () => {
     ];
 
     expect(toOfficialRows(cells, augustDocument)).toEqual([]);
+  });
+
+  it("categorizes a combined document strictly by official code family and reports unknowns", () => {
+    const combinedDocument: SourceDocument = {
+      year: 2026,
+      month: 1,
+      category: "combined",
+      sourceUrl: "https://webdosya.csb.gov.tr/files/2026/01/1-BF-ocak-2026.pdf",
+      format: "pdf",
+      discoveredFromUrl: "https://yfk.csb.gov.tr/aylik-guncel-rayic-ve-birim-fiyat-listeleri-113351",
+    };
+    const cells = [
+      ["10.100.1001", "İnşaat rayiç", "Sa", "1,00"],
+      ["15.100.1001", "İnşaat birim fiyat", "m²", "2,00"],
+      ["20.100.1001", "Mekanik rayiç", "Ad", "3,00"],
+      ["25.100.1001", "Mekanik birim fiyat", "Ad", "4,00"],
+      ["30.100.1001", "Elektrik rayiç", "Ad", "5,00"],
+      ["35.100.1001", "Elektrik birim fiyat", "Ad", "6,00"],
+      ["40.100.1001", "Bilinmeyen aile", "Ad", "7,00"],
+    ];
+
+    expect(toOfficialRowsWithReport(cells, combinedDocument)).toEqual({
+      rows: expect.arrayContaining([
+        expect.objectContaining({ officialCode: "10.100.1001", category: "construction-rayic" }),
+        expect.objectContaining({ officialCode: "15.100.1001", category: "construction-unit-price" }),
+        expect.objectContaining({ officialCode: "20.100.1001", category: "mechanical-rayic" }),
+        expect.objectContaining({ officialCode: "25.100.1001", category: "mechanical-unit-price" }),
+        expect.objectContaining({ officialCode: "30.100.1001", category: "electrical-rayic" }),
+        expect.objectContaining({ officialCode: "35.100.1001", category: "electrical-unit-price" }),
+      ]),
+      omittedUnknownCodeFamilies: ["40"],
+    });
+  });
+
+  it("stops with an explicit error for an image-only PDF", async () => {
+    await expect(parseSourceDocument(augustDocument, blankPdf())).rejects.toThrow(
+      "Image-only PDF is unsupported",
+    );
   });
 });

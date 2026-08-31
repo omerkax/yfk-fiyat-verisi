@@ -35,19 +35,23 @@ export function findMonthEntry(html: string, year: number, month: number): Month
   const heading = $("h1, h2, h3, h4, h5, h6").filter((_, element) =>
     $(element).text().includes(String(year)),
   ).first();
-  const table = tableFollowingHeading($, heading);
+  const table = heading.length
+    ? tableFollowingHeading($, heading)
+    : $("table").filter((_, element) => normalize($(element).find("tr").first().text())
+      .includes(String(year))).first();
 
-  if (!heading.length || !table.length) {
+  if (!table.length) {
     throw new Error(`No official monthly table found for ${year}`);
   }
 
-  const row = table.find("tr").filter((_, element) => {
-    const label = normalize($(element).find("td, th").first().text());
-    return TURKISH_MONTHS[label] === month;
+  const anchor = table.find("a[href]").filter((_, element) => {
+    const anchorLabel = normalize($(element).text());
+    const rowLabel = normalize($(element).closest("tr").find("td, th").first().text());
+    return TURKISH_MONTHS[anchorLabel] === month || TURKISH_MONTHS[rowLabel] === month;
   }).first();
-  const href = row.find("a[href]").first().attr("href");
+  const href = anchor.attr("href");
 
-  if (!row.length || !href) throw new Error(`No official entry found for ${year}-${month}`);
+  if (!anchor.length || !href) throw new Error(`No official entry found for ${year}-${month}`);
 
   const url = resolveOfficialUrl(href, "https://yfk.csb.gov.tr");
   return { kind: isDirectDocument(url) ? "document" : "announcement", url, year, month };

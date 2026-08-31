@@ -2,3 +2,5 @@ node_modules/
 output/imports/
 graphify-out/
 .superpowers/
+.claude/
+docs/

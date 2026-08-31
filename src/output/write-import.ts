@@ -1,4 +1,4 @@
-import { mkdir, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { TrackedItemMatchResult } from "../catalog/matcher.js";
@@ -21,6 +21,13 @@ export async function writeImport(
   rows: readonly OfficialPriceRow[],
   matches: TrackedItemMatchResult,
 ): Promise<void> {
+  try {
+    await stat(outputDir);
+    throw new Error(`Import already exists: ${outputDir}`);
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+  }
+
   const parentDir = dirname(outputDir);
   const temporaryDir = join(parentDir, `.${basename(outputDir)}.tmp-${randomUUID()}`);
 
@@ -39,7 +46,14 @@ export async function writeImport(
     const failure = writeResults.find((result) => result.status === "rejected");
     if (failure?.status === "rejected") throw failure.reason;
 
-    await rename(temporaryDir, outputDir);
+    try {
+      await rename(temporaryDir, outputDir);
+    } catch (error) {
+      if (error instanceof Error && "code" in error && ["EEXIST", "ENOTEMPTY"].includes(String(error.code))) {
+        throw new Error(`Import already exists: ${outputDir}`);
+      }
+      throw error;
+    }
   } catch (error) {
     await rm(temporaryDir, { recursive: true, force: true });
     throw error;

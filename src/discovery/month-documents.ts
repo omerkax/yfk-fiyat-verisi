@@ -1,5 +1,5 @@
 import { load } from "cheerio";
-import { FORMAT_RANK, resolveOfficialUrl } from "../config.js";
+import { FORMAT_RANK, MONTHLY_INDEX_URL, resolveOfficialUrl } from "../config.js";
 import type { SourceCategory, SourceDocument, SourceFormat } from "../types.js";
 import type { MonthEntry } from "./monthly-index.js";
 
@@ -49,6 +49,7 @@ function sourceFormat(url: string, contentType?: string): SourceFormat | undefin
 export function selectPreferredDocuments(documents: SourceDocument[]): SourceDocument[] {
   const preferred = new Map<SourceCategory, SourceDocument>();
   for (const document of documents) {
+    if (document.category === "combined") continue;
     const current = preferred.get(document.category);
     if (!current || FORMAT_RANK[document.format] < FORMAT_RANK[current.format]) {
       preferred.set(document.category, document);
@@ -61,7 +62,18 @@ export async function discoverMonthlyDocuments(
   entry: MonthEntry,
   fetchText: FetchText,
 ): Promise<SourceDocument[]> {
-  if (entry.kind === "document") return [];
+  if (entry.kind === "document") {
+    const format = sourceFormat(entry.url);
+    if (!format) throw new Error(`Unsupported official source format: ${entry.url}`);
+    return [{
+      year: entry.year,
+      month: entry.month,
+      category: "combined",
+      sourceUrl: entry.url,
+      format,
+      discoveredFromUrl: MONTHLY_INDEX_URL,
+    }];
+  }
 
   const page = await fetchText(entry.url);
   const { html, attachmentContentTypes = {} } = typeof page === "string" ? { html: page } : page;

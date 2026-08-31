@@ -17,15 +17,50 @@ describe("monthly document discovery", () => {
     });
   });
 
+  it("finds the year in the official table header row used by the live index", () => {
+    const liveShape = `
+      <div class="page_content">
+        <table><tbody>
+          <tr><td colspan="10"><strong>2026 YILINA AİT GÜNCEL AYLIK RAYİÇ VE BİRİM FİYAT LİSTELERİ</strong></td></tr>
+          <tr>
+            <td><a href="https://yfk.csb.gov.tr/temmuz">Temmuz</a></td>
+            <td><p><a href="https://yfk.csb.gov.tr/agustos">Ağustos</a></p></td>
+          </tr>
+        </tbody></table>
+      </div>
+    `;
+
+    expect(findMonthEntry(liveShape, 2026, 8)).toEqual({
+      kind: "announcement",
+      url: "https://yfk.csb.gov.tr/agustos",
+      year: 2026,
+      month: 8,
+    });
+  });
+
   it("keeps a direct monthly PDF as a distinct document entry", async () => {
     const indexHtml = await fixture("monthly-index.html");
+    const entry = findMonthEntry(indexHtml, 2026, 1);
+    let fetches = 0;
 
-    expect(findMonthEntry(indexHtml, 2026, 1)).toEqual({
+    expect(entry).toEqual({
       kind: "document",
       url: "https://webdosya.csb.gov.tr/files/2026/01/1-BF-ocak-2026.pdf",
       year: 2026,
       month: 1,
     });
+    await expect(discoverMonthlyDocuments(entry, async () => {
+      fetches += 1;
+      return "";
+    })).resolves.toEqual([{
+      year: 2026,
+      month: 1,
+      category: "combined",
+      sourceUrl: entry.url,
+      format: "pdf",
+      discoveredFromUrl: "https://yfk.csb.gov.tr/aylik-guncel-rayic-ve-birim-fiyat-listeleri-113351",
+    }]);
+    expect(fetches).toBe(0);
   });
 
   it("maps all six announcement links and prefers xlsx to PDF", async () => {

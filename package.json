@@ -7,7 +7,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "fetch": "tsx src/index.ts",
-    "smoke:live": "tsx scripts/smoke-live.ts"
+    "smoke:live": "tsx scripts/smoke-live.ts",
+    "dev": "tsx scripts/serve.ts"
   },
   "dependencies": {
     "cheerio": "^1.1.2",

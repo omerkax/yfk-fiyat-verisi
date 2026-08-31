@@ -7,6 +7,7 @@ export const OFFICIAL_HOSTS = new Set([
 
 export const OFFICIAL_USER_AGENT = "yfk-price-fetcher/1.0";
 export const OFFICIAL_TIMEOUT_MS = 30_000;
+export const MONTHLY_INDEX_URL = "https://yfk.csb.gov.tr/aylik-guncel-rayic-ve-birim-fiyat-listeleri-113351";
 
 export function resolveOfficialUrl(value: string, base?: string): string {
   const url = new URL(value, base);

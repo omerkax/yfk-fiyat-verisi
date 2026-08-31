@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YFK Fiyat Verisi Dashboard</title>
+  <style>
+    /* Premium CSS Reset and Typography */
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-card: rgba(17, 24, 39, 0.7);
+      --bg-card-hover: rgba(31, 41, 55, 0.8);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-color-hover: rgba(255, 255, 255, 0.15);
+      
+      --color-primary: #8b5cf6; /* Neon Purple */
+      --color-primary-glow: rgba(139, 92, 246, 0.2);
+      --color-secondary: #06b6d4; /* Neon Cyan */
+      --color-secondary-glow: rgba(6, 182, 212, 0.2);
+      
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+      
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-highlight: #ffffff;
+      
+      --sidebar-width: 280px;
+      --transition-speed: 0.3s;
+    }
+
+    /* Light Mode Variables Override */
+    body.light-theme {
+      --bg-primary: #f3f4f6;
+      --bg-secondary: #ffffff;
+      --bg-card: rgba(255, 255, 255, 0.8);
+      --bg-card-hover: rgba(243, 244, 246, 0.9);
+      --border-color: rgba(0, 0, 0, 0.08);
+      --border-color-hover: rgba(0, 0, 0, 0.15);
+      
+      --color-primary: #7c3aed;
+      --color-primary-glow: rgba(124, 58, 237, 0.15);
+      --color-secondary: #0891b2;
+      --color-secondary-glow: rgba(8, 145, 178, 0.15);
+      
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --text-highlight: #111827;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at top, var(--bg-primary) 0%, #060913 100%);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      overflow-x: hidden;
+      transition: background var(--transition-speed);
+    }
+
+    body.light-theme {
+      background: radial-gradient(circle at top, var(--bg-primary) 0%, #e5e7eb 100%);
+    }
+
+    /* Scrollbar Style */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--color-primary);
+    }
+
+    /* Sidebar Layout */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 10;
+      transition: background var(--transition-speed), border var(--transition-speed);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px var(--color-primary-glow);
+    }
+
+    .logo-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: #ffffff;
+    }
+
+    .logo-text {
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text-highlight) 30%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      list-style: none;
+    }
+
+    .nav-item button {
+      width: 100%;
+      background: none;
+      border: none;
+      outline: none;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nav-item button svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+      transition: transform 0.2s;
+    }
+
+    .nav-item.active button {
+      background: linear-gradient(135deg, var(--color-primary-glow) 0%, rgba(139, 92, 246, 0.03) 100%);
+      color: var(--text-highlight);
+      border: 1px solid var(--border-color-hover);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      position: relative;
+    }
+
+    .nav-item.active button::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 25%;
+      height: 50%;
+      width: 4px;
+      background: var(--color-primary);
+      border-radius: 0 4px 4px 0;
+    }
+
+    .nav-item button:hover {
+      color: var(--text-highlight);
+      background: var(--bg-card-hover);
+    }
+
+    .nav-item button:hover svg {
+      transform: translateX(2px);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .theme-toggle-btn {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem;
+      border-radius: 12px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .theme-toggle-btn:hover {
+      border-color: var(--border-color-hover);
+      background: var(--bg-card-hover);
+    }
+
+    /* Main Content Layout */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      flex-grow: 1;
+      padding: 3rem 4rem;
+      max-width: 1600px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 3.5rem;
+    }
+
+    .header-left h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--text-highlight);
+      margin-bottom: 0.5rem;
+    }
+
+    .header-left p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: var(--color-success);
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .period-selector {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.5rem 1rem;
+      color: var(--text-highlight);
+      font-weight: 700;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .period-selector:hover {
+      border-color: var(--border-color-hover);
+    }
+
+    /* Cards Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .kpi-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: transparent;
+      transition: background 0.3s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-color-hover);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .kpi-card:nth-child(1):hover::after { background: var(--color-primary); }
+    .kpi-card:nth-child(2):hover::after { background: var(--color-secondary); }
+    .kpi-card:nth-child(3):hover::after { background: var(--color-success); }
+    .kpi-card:nth-child(4):hover::after { background: var(--color-warning); }
+
+    .kpi-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+
+    .kpi-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-highlight);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .kpi-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Tab Containers */
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Overview Dashboard Style */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .dashboard-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 2.25rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      margin-bottom: 2rem;
+    }
+
+    .panel-header h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-highlight);
+      margin-bottom: 0.25rem;
+    }
+
+    .panel-header p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Donut Chart SVG Styling */
+    .chart-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      height: 250px;
+    }
+
+    .donut-chart-svg {
+      transform: rotate(-90deg);
+      width: 220px;
+      height: 220px;
+    }
+
+    .donut-segment {
+      fill: none;
+      stroke-width: 18px;
+      transition: stroke-dasharray 0.5s ease-out;
+    }
+
+    .donut-segment-1 { stroke: var(--color-primary); }
+    .donut-segment-2 { stroke: var(--color-secondary); }
+    .donut-segment-3 { stroke: #a78bfa; }
+    .donut-segment-4 { stroke: #2dd4bf; }
+    .donut-segment-5 { stroke: #ec4899; }
+    .donut-segment-6 { stroke: #f59e0b; }
+
+    .chart-legend {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-main);
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+    }
+
+    .legend-dot-1 { background: var(--color-primary); }
+    .legend-dot-2 { background: var(--color-secondary); }
+    .legend-dot-3 { background: #a78bfa; }
+    .legend-dot-4 { background: #2dd4bf; }
+    .legend-dot-5 { background: #ec4899; }
+    .legend-dot-6 { background: #f59e0b; }
+
+    /* Category Blocks Grid */
+    .categories-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .category-row-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      transition: background 0.2s;
+    }
+
+    .category-row-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .category-row-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .category-icon-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .category-row-count {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--text-highlight);
+    }
+
+    /* Filters and Search controls */
+    .controls-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex-grow: 1;
+      max-width: 480px;
+    }
+
+    .search-wrapper svg {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      fill: var(--text-muted);
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 0.85rem 1rem 0.85rem 2.75rem;
+      border-radius: 12px;
+      outline: none;
+      color: var(--text-highlight);
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-glow);
+    }
+
+    .filter-tags {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .filter-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 0.6rem 1.1rem;
+      border-radius: 10px;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--border-color-hover);
+      color: var(--text-highlight);
+    }
+
+    .filter-btn.active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px var(--color-primary-glow);
+    }
+
+    /* Table styles */
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      margin-bottom: 2rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.01);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1.1rem 1.5rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 1.1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: var(--bg-card-hover);
+    }
+
+    .code-cell {
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--color-secondary);
+      font-size: 0.95rem;
+    }
+
+    .price-cell {
+      font-weight: 800;
+      color: var(--text-highlight);
+      font-size: 0.95rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 6px;
+      text-transform: capitalize;
+    }
+
+    .badge-construction {
+      background: rgba(139, 92, 246, 0.1);
+      color: #a78bfa;
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
+    .badge-mechanical {
+      background: rgba(6, 182, 212, 0.1);
+      color: #22d3ee;
+      border: 1px solid rgba(6, 182, 212, 0.2);
+    }
+
+    .badge-electrical {
+      background: rgba(236, 72, 153, 0.1);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.2);
+    }
+
+    .badge-status {
+      border-radius: 20px;
+      padding: 0.25rem 0.65rem;
+    }
+
+    .badge-status.success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--color-success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-status.failed {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--color-danger);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Pagination controls */
+    .pagination-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .pagination-info {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .pagination-nav {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .pagination-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      border-color: var(--border-color-hover);
+      background: var(--bg-card-hover);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Manifest styles */
+    .manifest-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .manifest-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .manifest-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+    }
+
+    .manifest-doc-info h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-highlight);
+      margin-bottom: 0.25rem;
+    }
+
+    .manifest-doc-info p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .manifest-hash-box {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .copy-btn {
+      background: var(--color-primary-glow);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: var(--text-highlight);
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: var(--color-primary);
+    }
+
+    .manifest-stats {
+      display: flex;
+      gap: 2rem;
+      margin-top: 0.5rem;
+    }
+
+    .manifest-stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .manifest-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .manifest-stat-value {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-highlight);
+    }
+
+    .manifest-link-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      color: var(--color-secondary);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .manifest-link-badge:hover {
+      color: var(--text-highlight);
+    }
+
+    .no-data-msg {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar Layout -->
+  <aside class="sidebar">
+    <div class="logo-container">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2L2 22h20L12 2zm0 3.99L19.53 19H4.47L12 5.99zM13 16h-2v2h2v-2zm0-6h-2v4h2v-4z"/>
+        </svg>
+      </div>
+      <div class="logo-text">YFK Price Intel</div>
+    </div>
+
+    <nav>
+      <ul class="nav-list">
+        <li class="nav-item active" data-tab="overview">
+          <button>
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+            Genel Bakış
+          </button>
+        </li>
+        <li class="nav-item" data-tab="tracked">
+          <button>
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+            Katalog İzleme
+          </button>
+        </li>
+        <li class="nav-item" data-tab="kobi">
+          <button>
+            <svg viewBox="0 0 24 24"><path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.7l5 4.5V18h-2v-6H9v6H7v-7.8l5-4.5z"/></svg>
+            KOBİ Müteahit
+          </button>
+        </li>
+        <li class="nav-item" data-tab="m2">
+          <button>
+            <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm2 2h4v4H7V7zm6 6h4v4h-4v-4z"/></svg>
+            m² Maliyet
+          </button>
+        </li>
+        <li class="nav-item" data-tab="all-rows">
+          <button>
+            <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+            Aylık Fiyat Tablosu
+          </button>
+        </li>
+        <li class="nav-item" data-tab="manifest">
+          <button>
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            Kaynak Denetimi
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="theme-toggle-btn" id="theme-toggle">
+        <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24">
+          <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+        </svg>
+        <span>Tema Değiştir</span>
+      </button>
+      <div style="margin-top:1rem; text-align:center; font-size:0.8rem; color:var(--text-muted);">
+        © Ömer Kaya
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Layout -->
+  <main class="main-content">
+    <header>
+      <div class="header-left">
+        <h1>YFK Resmi Fiyat Verisi</h1>
+        <p>
+          <span class="status-badge" id="audit-status">
+            <svg style="width:12px;height:12px;fill:currentColor;margin-top:1px;" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            Verified & Audited
+          </span>
+          <span id="header-subtitle">Yüksek Fen Kurulu (YFK) Aylık Güncellemeleri</span>
+        </p>
+      </div>
+      <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+        <select class="period-selector" id="period-select">
+          <option value="2026-08" selected>Ağustos 2026</option>
+        </select>
+        <button class="period-selector" id="fetch-btn" style="cursor:pointer; display:flex; align-items:center; gap:0.4rem; border:none;">
+          <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+          <span id="fetch-btn-label">Veri Çek</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- KPI Metrics -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-title">Toplam Resmi Satır</span>
+        <span class="kpi-value" id="kpi-total-rows">0</span>
+        <span class="kpi-desc">Ayrıştırılmış & normalize edilmiş poz</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-title">Katalog Eşleşmesi</span>
+        <span class="kpi-value" id="kpi-match-rate">0%</span>
+        <span class="kpi-desc" id="kpi-match-info">0 / 0 Kalem eşleşti</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-title">Seçilen Belgeler</span>
+        <span class="kpi-value" id="kpi-docs-count">0</span>
+        <span class="kpi-desc" id="kpi-docs-desc">Kategori bazlı pdf dosyaları</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-title">Son Tarama</span>
+        <span class="kpi-value" style="font-size: 1.15rem; font-weight: 700; margin-top: 0.5rem;" id="kpi-fetch-date">-</span>
+        <span class="kpi-desc">YFK resmi sunucusundan</span>
+      </div>
+    </section>
+
+    <!-- TAB 1: OVERVIEW -->
+    <section class="tab-content active" id="overview-tab">
+      <div class="dashboard-layout">
+        <!-- Donut Chart -->
+        <div class="dashboard-panel">
+          <div class="panel-header">
+            <h2>Kategori Dağılımı</h2>
+            <p>Ayrıştırılan satırların altı resmi kategoriye göre oransal ağırlığı</p>
+          </div>
+          <div class="chart-container">
+            <svg class="donut-chart-svg" viewBox="0 0 42 42" id="donut-svg">
+              <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="var(--border-color)" stroke-width="1.5"></circle>
+              <!-- Segments injected dynamically -->
+            </svg>
+          </div>
+          <div class="chart-legend" id="donut-legend">
+            <!-- Legend injected dynamically -->
+          </div>
+        </div>
+
+        <!-- Categories List -->
+        <div class="dashboard-panel">
+          <div class="panel-header">
+            <h2>Kategoriler ve Satır Sayıları</h2>
+            <p>Her bir resmi dokümandan çıkarılan toplam geçerli poz fiyatları</p>
+          </div>
+          <div class="categories-list" id="category-rows-list">
+            <!-- Dynamic Category Rows -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: TRACKED CATALOG PRICES -->
+    <section class="tab-content" id="tracked-tab">
+      <div class="controls-row">
+        <div class="search-wrapper">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" class="search-input" id="search-tracked" placeholder="Eşleşen katalog kalemlerinde ara (Poz no, adı)...">
+        </div>
+        <div class="filter-tags" id="filter-tracked-tags">
+          <button class="filter-btn active" data-filter="all">Tümü</button>
+          <button class="filter-btn" data-filter="construction">İnşaat</button>
+          <button class="filter-btn" data-filter="mechanical">Mekanik</button>
+          <button class="filter-btn" data-filter="electrical">Elektrik</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Poz No</th>
+              <th>Katalog Görünüm Adı</th>
+              <th>Resmi Tanım</th>
+              <th>Birim</th>
+              <th>Birim Fiyatı (TL)</th>
+              <th>Kategori</th>
+            </tr>
+          </thead>
+          <tbody id="tracked-table-body">
+            <!-- Injected dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 3: ALL PRICE ROWS (PAGINATED & VIRTUALIZED) -->
+    <section class="tab-content" id="all-rows-tab">
+      <div class="controls-row">
+        <div class="search-wrapper">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" class="search-input" id="search-all" placeholder="Poz no veya ad ara (ör. C30 beton)...">
+        </div>
+        <div class="filter-tags" id="filter-all-tags">
+          <button class="filter-btn active" data-filter="all">Tümü</button>
+          <button class="filter-btn" data-filter="construction-rayic">İnşaat Rayiç</button>
+          <button class="filter-btn" data-filter="construction-unit-price">İnşaat B.F.</button>
+          <button class="filter-btn" data-filter="mechanical-rayic">Mekanik Rayiç</button>
+          <button class="filter-btn" data-filter="mechanical-unit-price">Mekanik B.F.</button>
+          <button class="filter-btn" data-filter="electrical-rayic">Elektrik Rayiç</button>
+          <button class="filter-btn" data-filter="electrical-unit-price">Elektrik B.F.</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr id="all-rows-header-row">
+              <!-- Poz No / Tanım / Birim + one column per month, injected dynamically -->
+            </tr>
+          </thead>
+          <tbody id="all-rows-table-body">
+            <!-- Injected dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="pagination-row">
+        <span class="pagination-info" id="pagination-stats">Gösterilen: 0 - 0 / Toplam: 0</span>
+        <div class="pagination-nav">
+          <button class="pagination-btn" id="pagination-prev" disabled>
+            <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            Önceki
+          </button>
+          <span style="font-weight:700; font-size:0.9rem; margin: 0 0.5rem;" id="pagination-current-page">1</span>
+          <button class="pagination-btn" id="pagination-next">
+            Sonraki
+            <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: KOBİ CONTRACTOR CORE COST ITEMS -->
+    <section class="tab-content" id="kobi-tab">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size:1.4rem; font-weight:800; margin-bottom:0.35rem;">KOBİ Müteahit — Temel Giderler</h2>
+        <p style="color: var(--text-muted); font-size:0.95rem;">Küçük ve orta ölçekli müteahitlerin gerçekten takip ettiği ana maliyet kalemleri, ay ay.</p>
+      </div>
+      <div class="controls-row">
+        <div class="search-wrapper">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" class="search-input" id="search-kobi" placeholder="Kalem ara (ör. beton, demir, çimento)...">
+        </div>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr id="kobi-header-row">
+              <!-- Kalem / Birim + one column per month, injected dynamically -->
+            </tr>
+          </thead>
+          <tbody id="kobi-table-body">
+            <!-- Injected dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB: TOTAL CONSTRUCTION COST PER M2 -->
+    <section class="tab-content" id="m2-tab">
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size:1.4rem; font-weight:800; margin-bottom:0.35rem;">Toplam İnşaat m² Maliyeti</h2>
+        <p style="color: var(--text-muted); font-size:0.95rem; max-width:760px;">
+          Kaba yapı ağırlıklı yaklaşık m² maliyeti. Her kalemin <strong>metrajı</strong> (1 m² inşaata düşen miktar) düzenlenebilir —
+          kendi projenize göre değiştirin, toplam anında güncellenir. Birim fiyatlar en güncel aydan (<span id="m2-period-label">–</span>) alınır. <em>Fiyatlar KDV hariçtir.</em>
+        </p>
+      </div>
+
+      <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+        <div class="kpi-card" style="flex:1; min-width:240px;">
+          <div class="kpi-title">TOPLAM m² MALİYETİ</div>
+          <div class="kpi-value" id="m2-total">₺0</div>
+          <div class="kpi-desc">Seçili metrajlarla, KDV hariç</div>
+        </div>
+        <div class="kpi-card" style="flex:1; min-width:240px;">
+          <div class="kpi-title">TAHMİNİ TOPLAM (ALAN × m²)</div>
+          <div style="display:flex; align-items:center; gap:0.5rem; margin:0.5rem 0;">
+            <input type="number" id="m2-area" value="100" min="0" style="width:110px; padding:0.5rem; border-radius:10px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); font-size:1rem;">
+            <span style="color:var(--text-muted);">m² için</span>
+          </div>
+          <div class="kpi-value" id="m2-grand" style="font-size:1.5rem;">₺0</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr id="m2-header-row">
+              <th>Kalem</th><th>Poz No</th><th>Birim</th>
+              <th style="text-align:right;">Birim Fiyat</th>
+              <th style="text-align:right;">Metraj (m²/birim)</th>
+              <th style="text-align:right;">m² Maliyeti</th>
+            </tr>
+          </thead>
+          <tbody id="m2-table-body"><!-- injected --></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5" style="text-align:right; font-weight:800;">TOPLAM (₺/m²)</td>
+              <td class="price-cell" id="m2-foot-total" style="text-align:right; font-weight:800; color:var(--color-primary);">₺0</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 4: SOURCE AUDIT & MANIFEST -->
+    <section class="tab-content" id="manifest-tab">
+      <div class="manifest-grid" id="manifest-list">
+        <!-- Dynamic Manifest Cards -->
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Curated core cost items for an SME contractor ("KOBİ Müteahit"),
+    // grouped by trade. Codes reference official YFK poz numbers; edit freely.
+    const KOBI_ITEMS = [
+      { group: "Hafriyat / Kazı", codes: ["15.120.1001", "15.120.1002", "15.120.1003", "15.115.1001", "15.100.1003", "15.125.1011"] },
+      { group: "İşçilik", codes: ["10.100.1062", "10.100.1063", "10.100.1015", "10.100.1013", "10.100.1012", "10.100.1001", "10.100.1086", "10.100.1021"] },
+      { group: "Hazır Beton", codes: ["10.130.1503", "10.130.1504", "10.130.1505", "10.130.1506", "10.130.1507", "10.130.1508"] },
+      { group: "Demir / Çelik", codes: ["10.130.1705", "10.130.1703", "10.130.1751"] },
+      { group: "Kalıp", codes: ["15.180.1001", "15.180.1007", "10.130.4501", "10.130.4502"] },
+      { group: "Çimento", codes: ["10.130.1201", "10.130.1202"] },
+      { group: "Agrega (Kum / Çakıl)", codes: ["10.130.1001", "10.130.1002", "10.130.1003"] },
+      { group: "Duvar (Tuğla / Gazbeton)", codes: ["10.130.2003", "10.130.2501", "10.130.2502"] },
+      { group: "Kireç", codes: ["10.130.6001"] },
+      { group: "Yıkım", codes: ["15.106.1001", "15.106.1004"] },
+    ];
+
+    // Approximate structural ("kaba yapı") m² cost model. `qty` = amount of each
+    // item per 1 m² of construction; fully editable by the user in the UI.
+    const M2_MODEL = [
+      { label: "Hafriyat (makine ile kazı)", code: "15.120.1001", qty: 0.45 },
+      { label: "Hazır beton C25/30", code: "10.130.1505", qty: 0.40 },
+      { label: "Betonarme demiri (nervürlü)", code: "10.130.1705", qty: 40 },
+      { label: "Kalıp (ahşap seri)", code: "15.180.1001", qty: 2.20 },
+      { label: "Duvar (gazbeton 7,5 cm)", code: "10.130.2502", qty: 1.30 },
+      { label: "Çimento (torbalı)", code: "10.130.1201", qty: 0.03 },
+      { label: "Betoncu ustası (işçilik)", code: "10.100.1015", qty: 1.50 },
+      { label: "Düz işçi", code: "10.100.1062", qty: 3.00 },
+    ];
+
+    // Constants mapping category technical IDs to display terms
+    const CATEGORY_NAMES = {
+      "construction-rayic": "İnşaat Rayiçleri",
+      "construction-unit-price": "İnşaat Birim Fiyatları",
+      "mechanical-rayic": "Mekanik Tesisat Rayiçleri",
+      "mechanical-unit-price": "Mekanik Tesisat Birim Fiyatları",
+      "electrical-rayic": "Elektrik Tesisat Rayiçleri",
+      "electrical-unit-price": "Elektrik Tesisat Birim Fiyatları",
+    };
+
+    const CATEGORY_SHORT_CLASSES = {
+      "construction-rayic": "construction",
+      "construction-unit-price": "construction",
+      "mechanical-rayic": "mechanical",
+      "mechanical-unit-price": "mechanical",
+      "electrical-rayic": "electrical",
+      "electrical-unit-price": "electrical",
+    };
+
+    // State Variables
+    let manifestData = null;
+    let priceRows = [];
+    let trackedPrices = [];
+
+    // Paginated Table State
+    let currentPage = 1;
+    const pageSize = 50;
+    let filteredAllRows = [];
+
+    // Multi-month pivot: { months: ["2026-05",...], rows: [{officialCode, officialName,
+    // unit, category, prices: {month: priceTry}}] } — powers the month-by-month table.
+    let pivotData = { months: [], rows: [] };
+
+    // Setup Theme Toggle
+    const themeToggleBtn = document.getElementById("theme-toggle");
+    themeToggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("light-theme");
+    });
+
+    // Navigation logic
+    const navItems = document.querySelectorAll(".nav-item");
+    const tabContents = document.querySelectorAll(".tab-content");
+
+    navItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        const tabId = item.getAttribute("data-tab");
+        
+        navItems.forEach((btn) => btn.classList.remove("active"));
+        item.classList.add("active");
+        
+        tabContents.forEach((tab) => {
+          tab.classList.remove("active");
+          if (tab.id === `${tabId}-tab`) {
+            tab.classList.add("active");
+          }
+        });
+      });
+    });
+
+    // Format currency function
+    function formatCurrency(val) {
+      return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(val);
+    }
+
+    // Space/punctuation-insensitive search: "C30 beton" must match "C 30/37 beton harcı".
+    // Each whitespace-separated token must appear in the space-stripped, lowercased text.
+    function matchesSearch(query, ...fields) {
+      const tokens = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      if (tokens.length === 0) return true;
+      const haystack = fields
+        .filter(Boolean)
+        .map(f => f.toLowerCase().replace(/\s+/g, ""))
+        .join(" ");
+      return tokens.every(t => haystack.includes(t.replace(/\s+/g, "")));
+    }
+
+    // Format file sizes
+    function formatBytes(bytes) {
+      if (bytes === 0) return "0 Bytes";
+      const k = 1024;
+      const sizes = ["Bytes", "KB", "MB"];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    }
+
+    // Format date string
+    function formatDate(isoString) {
+      if (!isoString) return "-";
+      return new Date(isoString).toLocaleString("tr-TR");
+    }
+
+    // Copy to clipboard helper
+    window.copyText = function(text, btnId) {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById(btnId);
+        const originalText = btn.innerText;
+        btn.innerText = "Kopyalandı!";
+        btn.style.background = "var(--color-success)";
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.style.background = "";
+        }, 1500);
+      });
+    }
+
+    // Fetch and Initialize App Data for a given period ("YYYY-MM").
+    async function initApp(period) {
+      try {
+        const base = `/output/imports/${period}`;
+
+        // Fetch data files
+        const manifestRes = await fetch(`${base}/manifest.json`);
+        manifestData = await manifestRes.json();
+
+        const priceRowsRes = await fetch(`${base}/official-price-rows.json`);
+        priceRows = await priceRowsRes.json();
+
+        // tracked-prices.json holds the matched items array; unmatched items
+        // live in a separate artifact file. Assemble them into a single object.
+        const trackedPricesRes = await fetch(`${base}/tracked-prices.json`);
+        const matchedItems = await trackedPricesRes.json();
+
+        const unmatchedRes = await fetch(`${base}/unmatched-tracked-items.json`);
+        const unmatched = await unmatchedRes.json();
+
+        trackedPrices = { matchedItems, unmatched };
+
+        // Update statistics KPI metrics
+        document.getElementById("kpi-total-rows").innerText = priceRows.length.toLocaleString("tr-TR");
+        
+        const totalTracked = trackedPrices.matchedItems.length + trackedPrices.unmatched.length;
+        const matchPercent = totalTracked > 0 ? Math.round((trackedPrices.matchedItems.length / totalTracked) * 100) : 0;
+        document.getElementById("kpi-match-rate").innerText = `${matchPercent}%`;
+        document.getElementById("kpi-match-info").innerText = `${trackedPrices.matchedItems.length} / ${totalTracked} Kalem eşleşti`;
+        
+        document.getElementById("kpi-docs-count").innerText = manifestData.documents.length;
+        document.getElementById("kpi-docs-desc").innerText = `${manifestData.documents.filter(d => d.format === "pdf").length} PDF Denetlendi`;
+        
+        document.getElementById("kpi-fetch-date").innerText = formatDate(manifestData.fetchedAt).split(" ")[0];
+
+        // 1. Populate category listing and charts in overview dashboard
+        renderOverviewDashboard();
+
+        // 2. Initialise Tracked Catalog Prices Tab
+        initTrackedPricesTab();
+
+        // 3. Initialise Source Audit Manifest Tab
+        initManifestTab();
+
+        // (The month-by-month table is driven by pivotData and initialised
+        //  separately from bootstrap once every month has been loaded.)
+
+      } catch (err) {
+        console.error("Failed to initialize dashboard data:", err);
+      }
+    }
+
+    // Dashboard Overview Tab rendering logic
+    function renderOverviewDashboard() {
+      const catCounts = {};
+      Object.keys(CATEGORY_NAMES).forEach(cat => catCounts[cat] = 0);
+      
+      priceRows.forEach(row => {
+        if (catCounts[row.category] !== undefined) {
+          catCounts[row.category]++;
+        }
+      });
+
+      // Render categories rows listing
+      const listContainer = document.getElementById("category-rows-list");
+      listContainer.innerHTML = "";
+      
+      let index = 1;
+      const sortedCategories = Object.keys(catCounts).sort((a,b) => catCounts[b] - catCounts[a]);
+      
+      sortedCategories.forEach((cat) => {
+        const rowCount = catCounts[cat];
+        const displayLabel = CATEGORY_NAMES[cat];
+        
+        const card = document.createElement("div");
+        card.className = "category-row-card";
+        card.innerHTML = `
+          <div class="category-row-label">
+            <span class="category-icon-indicator legend-dot-${index}"></span>
+            <span>${displayLabel}</span>
+          </div>
+          <div class="category-row-count">${rowCount.toLocaleString("tr-TR")} Poz</div>
+        `;
+        listContainer.appendChild(card);
+        index++;
+      });
+
+      // Render custom SVG donut segments
+      const total = priceRows.length;
+      let cumulativePercent = 0;
+      const donutSvg = document.getElementById("donut-svg");
+      const donutLegend = document.getElementById("donut-legend");
+      
+      donutLegend.innerHTML = "";
+      
+      // Clear existing paths/segments (keep the default back circle)
+      const segments = donutSvg.querySelectorAll('.donut-segment');
+      segments.forEach(el => el.remove());
+      
+      index = 1;
+      sortedCategories.forEach((cat) => {
+        const count = catCounts[cat];
+        const percentage = total > 0 ? (count / total) * 100 : 0;
+        
+        if (count > 0) {
+          // Dash-array stroke calculations
+          const strokeDash = `${percentage} ${100 - percentage}`;
+          const strokeOffset = 100 - cumulativePercent + 25; // 25 is alignment offset for top-start
+          
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("class", `donut-segment donut-segment-${index}`);
+          circle.setAttribute("cx", "21");
+          circle.setAttribute("cy", "21");
+          circle.setAttribute("r", "15.915");
+          circle.setAttribute("stroke-dasharray", strokeDash);
+          circle.setAttribute("stroke-dashoffset", strokeOffset.toString());
+          
+          donutSvg.appendChild(circle);
+          cumulativePercent += percentage;
+        }
+
+        // Add legend dot
+        const legend = document.createElement("div");
+        legend.className = "legend-item";
+        legend.innerHTML = `
+          <span class="legend-dot legend-dot-${index}"></span>
+          <span>${CATEGORY_NAMES[cat].replace(" Tesisat", "")} (${Math.round(percentage)}%)</span>
+        `;
+        donutLegend.appendChild(legend);
+        
+        index++;
+      });
+    }
+
+    // Catalog Tab logic
+    function initTrackedPricesTab() {
+      const searchTrackedInput = document.getElementById("search-tracked");
+      const filterTags = document.querySelectorAll("#filter-tracked-tags .filter-btn");
+      
+      let activeFilter = "all";
+      let searchQuery = "";
+
+      function filterAndRenderTracked() {
+        const tbody = document.getElementById("tracked-table-body");
+        tbody.innerHTML = "";
+        
+        const matched = trackedPrices.matchedItems || [];
+        
+        const filtered = matched.filter(match => {
+          const item = match.item;
+          const row = match.row;
+          
+          // Match category filter
+          if (activeFilter !== "all" && !item.sourceCategory.includes(activeFilter)) {
+            return false;
+          }
+          
+          // Match search query
+          if (searchQuery) {
+            if (!matchesSearch(searchQuery, item.officialCode, item.displayName, row.officialName)) return false;
+          }
+          
+          return true;
+        });
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="no-data-msg">Eşleşen katalog kalemi bulunamadı.</td></tr>`;
+          return;
+        }
+
+        filtered.forEach(match => {
+          const item = match.item;
+          const row = match.row;
+          const tr = document.createElement("tr");
+          
+          const catClass = CATEGORY_SHORT_CLASSES[row.category] || "construction";
+          
+          tr.innerHTML = `
+            <td class="code-cell">${item.officialCode}</td>
+            <td style="font-weight: 700;">${item.displayName}</td>
+            <td style="font-size:0.85rem; max-width:400px; color: var(--text-muted);">${row.officialName}</td>
+            <td>${row.unit}</td>
+            <td class="price-cell">${formatCurrency(row.priceTry)}</td>
+            <td><span class="badge badge-${catClass}">${item.sourceCategory.split("-")[0]}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      // Hook search inputs
+      searchTrackedInput.addEventListener("input", (e) => {
+        searchQuery = e.target.value;
+        filterAndRenderTracked();
+      });
+
+      // Hook filter buttons
+      filterTags.forEach(btn => {
+        btn.addEventListener("click", () => {
+          filterTags.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          activeFilter = btn.getAttribute("data-filter");
+          filterAndRenderTracked();
+        });
+      });
+
+      filterAndRenderTracked();
+    }
+
+    // Month-by-month price table: one row per poz, one price column per month.
+    function initAllPriceRowsTab() {
+      const searchAllInput = document.getElementById("search-all");
+      const filterTags = document.querySelectorAll("#filter-all-tags .filter-btn");
+      const nextBtn = document.getElementById("pagination-next");
+      const prevBtn = document.getElementById("pagination-prev");
+      const months = pivotData.months;
+
+      let activeFilter = "all";
+      let searchQuery = "";
+
+      // Build the table header once: fixed columns + one per month.
+      const headerRow = document.getElementById("all-rows-header-row");
+      headerRow.innerHTML =
+        `<th>Poz No</th><th>Resmi Tanım</th><th>Birim</th>` +
+        months.map(m => `<th style="text-align:right; white-space:nowrap;">${periodLabel(m)}</th>`).join("");
+
+      function filterRows() {
+        filteredAllRows = pivotData.rows.filter(row => {
+          if (activeFilter !== "all" && row.category !== activeFilter) {
+            return false;
+          }
+          if (searchQuery) {
+            if (!matchesSearch(searchQuery, row.officialCode, row.officialName)) return false;
+          }
+          return true;
+        });
+        currentPage = 1;
+        renderAllRowsPage();
+      }
+
+      function renderAllRowsPage() {
+        const tbody = document.getElementById("all-rows-table-body");
+        tbody.innerHTML = "";
+
+        const totalItems = filteredAllRows.length;
+        const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+        // Boundaries
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIdx = (currentPage - 1) * pageSize;
+        const endIdx = Math.min(startIdx + pageSize, totalItems);
+
+        const pageItems = filteredAllRows.slice(startIdx, endIdx);
+
+        // Update stats labels
+        document.getElementById("pagination-current-page").innerText = currentPage;
+        document.getElementById("pagination-stats").innerText = totalItems > 0
+          ? `Gösterilen: ${(startIdx + 1).toLocaleString("tr-TR")} - ${endIdx.toLocaleString("tr-TR")} / Toplam: ${totalItems.toLocaleString("tr-TR")}`
+          : "Gösterilen: 0 - 0 / Toplam: 0";
+
+        // Enable/Disable buttons
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+
+        const colspan = 3 + months.length;
+        if (pageItems.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data-msg">Arama kriterlerine uygun resmi poz bulunamadı.</td></tr>`;
+          return;
+        }
+
+        pageItems.forEach(row => {
+          const tr = document.createElement("tr");
+
+          const priceCells = months.map((m, i) => {
+            const price = row.prices[m];
+            if (price === undefined) {
+              return `<td class="price-cell" style="text-align:right; color: var(--text-muted);">–</td>`;
+            }
+            // Colour each month against the previous available one to show the trend.
+            let color = "";
+            const prev = i > 0 ? row.prices[months[i - 1]] : undefined;
+            if (prev !== undefined && price !== prev) {
+              color = price > prev ? "color:#22c55e;" : "color:#ef4444;";
+            }
+            const bold = i === months.length - 1 ? "font-weight:700;" : "";
+            return `<td class="price-cell" style="text-align:right; white-space:nowrap; ${color}${bold}">${formatCurrency(price)}</td>`;
+          }).join("");
+
+          tr.innerHTML = `
+            <td class="code-cell">${row.officialCode}</td>
+            <td style="font-size:0.85rem; max-width:420px; font-weight:500;">${row.officialName}</td>
+            <td>${row.unit}</td>
+            ${priceCells}
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      // Next / Prev listeners
+      nextBtn.addEventListener("click", () => {
+        currentPage++;
+        renderAllRowsPage();
+      });
+
+      prevBtn.addEventListener("click", () => {
+        currentPage--;
+        renderAllRowsPage();
+      });
+
+      // Search field listener
+      searchAllInput.addEventListener("input", (e) => {
+        searchQuery = e.target.value;
+        filterRows();
+      });
+
+      // Categories filter listeners
+      filterTags.forEach(btn => {
+        btn.addEventListener("click", () => {
+          filterTags.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          activeFilter = btn.getAttribute("data-filter");
+          filterRows();
+        });
+      });
+
+      // Run initial filter and render
+      filterRows();
+    }
+
+    // Load every available month and pivot it by poz code.
+    async function buildPivot(months) {
+      const ascending = [...months].sort();
+      const byCode = new Map();
+
+      const perMonth = await Promise.all(
+        ascending.map(async (m) => {
+          try {
+            return [m, await (await fetch(`/output/imports/${m}/official-price-rows.json`)).json()];
+          } catch {
+            return [m, []];
+          }
+        })
+      );
+
+      for (const [m, rows] of perMonth) {
+        rows.forEach(r => {
+          let entry = byCode.get(r.officialCode);
+          if (!entry) {
+            entry = { officialCode: r.officialCode, officialName: r.officialName, unit: r.unit, category: r.category, prices: {} };
+            byCode.set(r.officialCode, entry);
+          }
+          // Latest month wins for descriptive fields.
+          entry.officialName = r.officialName;
+          entry.unit = r.unit;
+          entry.category = r.category;
+          entry.prices[m] = r.priceTry;
+        });
+      }
+
+      pivotData = { months: ascending, rows: [...byCode.values()] };
+    }
+
+    // KOBİ Müteahit tab: curated core cost items, grouped, month-by-month.
+    function initKobiTab() {
+      const months = pivotData.months;
+      const byCode = new Map(pivotData.rows.map(r => [r.officialCode, r]));
+
+      const headerRow = document.getElementById("kobi-header-row");
+      headerRow.innerHTML =
+        `<th>Poz No</th><th>Kalem</th><th>Birim</th>` +
+        months.map(m => `<th style="text-align:right; white-space:nowrap;">${periodLabel(m)}</th>`).join("");
+
+      const searchInput = document.getElementById("search-kobi");
+      let searchQuery = "";
+
+      function render() {
+        const tbody = document.getElementById("kobi-table-body");
+        tbody.innerHTML = "";
+        const colspan = 3 + months.length;
+        let anyShown = false;
+
+        KOBI_ITEMS.forEach(({ group, codes }) => {
+          // Resolve curated codes to pivot rows, keeping only matches.
+          const items = codes
+            .map(code => byCode.get(code))
+            .filter(Boolean)
+            .filter(row => !searchQuery || matchesSearch(searchQuery, row.officialCode, row.officialName, group));
+
+          if (items.length === 0) return;
+          anyShown = true;
+
+          // Group header row.
+          const gh = document.createElement("tr");
+          gh.innerHTML = `<td colspan="${colspan}" style="background: var(--bg-card-hover); font-weight:800; font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color: var(--color-primary);">${group}</td>`;
+          tbody.appendChild(gh);
+
+          items.forEach(row => {
+            const priceCells = months.map((m, i) => {
+              const price = row.prices[m];
+              if (price === undefined) {
+                return `<td class="price-cell" style="text-align:right; color: var(--text-muted);">–</td>`;
+              }
+              let color = "";
+              const prev = i > 0 ? row.prices[months[i - 1]] : undefined;
+              if (prev !== undefined && price !== prev) {
+                color = price > prev ? "color:#22c55e;" : "color:#ef4444;";
+              }
+              const bold = i === months.length - 1 ? "font-weight:700;" : "";
+              return `<td class="price-cell" style="text-align:right; white-space:nowrap; ${color}${bold}">${formatCurrency(price)}</td>`;
+            }).join("");
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td class="code-cell">${row.officialCode}</td>
+              <td style="font-size:0.9rem; max-width:420px; font-weight:500;">${row.officialName}</td>
+              <td>${row.unit}</td>
+              ${priceCells}
+            `;
+            tbody.appendChild(tr);
+          });
+        });
+
+        if (!anyShown) {
+          tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data-msg">Aramaya uygun temel gider kalemi bulunamadı.</td></tr>`;
+        }
+      }
+
+      searchInput.addEventListener("input", (e) => {
+        searchQuery = e.target.value;
+        render();
+      });
+
+      render();
+    }
+
+    // m² cost tab: quantity-per-m² × latest unit price = cost per m².
+    function initM2Tab() {
+      const months = pivotData.months;
+      const latest = months[months.length - 1];
+      const byCode = new Map(pivotData.rows.map(r => [r.officialCode, r]));
+
+      const label = document.getElementById("m2-period-label");
+      if (label && latest) label.innerText = periodLabel(latest);
+
+      // Working copy of quantities so edits persist.
+      const qty = M2_MODEL.map(m => m.qty);
+      const priceOf = idx => {
+        const row = byCode.get(M2_MODEL[idx].code);
+        return row ? row.prices[latest] : undefined;
+      };
+      const lineCostCells = [];
+
+      // Build rows once; inputs stay stable so focus is never lost while typing.
+      const tbody = document.getElementById("m2-table-body");
+      tbody.innerHTML = "";
+      M2_MODEL.forEach((item, idx) => {
+        const row = byCode.get(item.code);
+        const price = priceOf(idx);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="font-weight:600;">${item.label}</td>
+          <td class="code-cell">${item.code}</td>
+          <td>${row ? row.unit : "–"}</td>
+          <td class="price-cell" style="text-align:right; white-space:nowrap;">${price !== undefined ? formatCurrency(price) : "–"}</td>
+          <td style="text-align:right;">
+            <input type="number" step="0.01" min="0" value="${qty[idx]}" data-idx="${idx}"
+              style="width:90px; padding:0.4rem; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); text-align:right;">
+          </td>
+          <td class="price-cell line-cost" style="text-align:right; white-space:nowrap; font-weight:700;"></td>
+        `;
+        tbody.appendChild(tr);
+        lineCostCells[idx] = tr.querySelector(".line-cost");
+      });
+
+      function recalc() {
+        let total = 0;
+        M2_MODEL.forEach((item, idx) => {
+          const price = priceOf(idx);
+          const lineCost = price !== undefined ? price * qty[idx] : 0;
+          total += lineCost;
+          lineCostCells[idx].innerText = formatCurrency(lineCost);
+        });
+        document.getElementById("m2-foot-total").innerText = formatCurrency(total);
+        document.getElementById("m2-total").innerText = formatCurrency(total);
+        const area = parseFloat(document.getElementById("m2-area").value) || 0;
+        document.getElementById("m2-grand").innerText = formatCurrency(total * area);
+      }
+
+      tbody.querySelectorAll("input[data-idx]").forEach(input => {
+        input.addEventListener("input", (e) => {
+          qty[Number(e.target.dataset.idx)] = parseFloat(e.target.value) || 0;
+          recalc();
+        });
+      });
+      document.getElementById("m2-area").addEventListener("input", recalc);
+
+      recalc();
+    }
+
+    // Manifest / Source Audit list logic
+    function initManifestTab() {
+      const container = document.getElementById("manifest-list");
+      container.innerHTML = "";
+
+      const docs = manifestData.documents || [];
+      let docIndex = 1;
+      
+      docs.forEach(doc => {
+        const card = document.createElement("div");
+        card.className = "manifest-card";
+        
+        const fileName = doc.sourceUrl.split("/").pop();
+        const displayCategory = CATEGORY_NAMES[doc.category] || doc.category;
+        const btnId = `btn-copy-${docIndex}`;
+
+        card.innerHTML = `
+          <div class="manifest-card-header">
+            <div class="manifest-doc-info">
+              <h3>${displayCategory}</h3>
+              <a class="manifest-link-badge" href="${doc.sourceUrl}" target="_blank" style="font-size:0.95rem; margin-top:0.25rem;">
+                <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                ${fileName}
+              </a>
+            </div>
+            <div>
+              <span class="status-badge" style="background:rgba(6, 182, 212, 0.1); color: var(--color-secondary); border-color: rgba(6, 182, 212, 0.2);">
+                ${doc.format.toUpperCase()}
+              </span>
+            </div>
+          </div>
+          
+          <div class="manifest-stats">
+            <div class="manifest-stat-item">
+              <span class="manifest-stat-label">Dosya Boyutu</span>
+              <span class="manifest-stat-value">${formatBytes(doc.byteLength)}</span>
+            </div>
+            <div class="manifest-stat-item">
+              <span class="manifest-stat-label">İndirme Zamanı</span>
+              <span class="manifest-stat-value">${formatDate(doc.fetchedAt)}</span>
+            </div>
+            <div class="manifest-stat-item">
+              <span class="manifest-stat-label">Keşif Sayfası</span>
+              <a class="manifest-link-badge manifest-stat-value" href="${doc.discoveredFromUrl}" target="_blank" style="font-size: 0.85rem; margin-top:0.15rem;">
+                Duyuru Sayfasına Git
+              </a>
+            </div>
+          </div>
+
+          <div class="manifest-hash-box">
+            <span>SHA-256: ${doc.sha256}</span>
+            <button class="copy-btn" id="${btnId}" onclick="copyText('${doc.sha256}', '${btnId}')">Hash Kopyala</button>
+          </div>
+        `;
+        
+        container.appendChild(card);
+        docIndex++;
+      });
+    }
+
+    // Turkish month names for "YYYY-MM" -> "Ağustos 2026" labels.
+    const TR_MONTHS = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran",
+      "Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+    function periodLabel(period) {
+      const [year, month] = period.split("-");
+      const name = TR_MONTHS[Number(month) - 1] || month;
+      return `${name} ${year}`;
+    }
+
+    // Discover available months, populate the selector, and load the chosen one.
+    async function bootstrap() {
+      const select = document.getElementById("period-select");
+      let months = [];
+      let apiOk = false;
+      try {
+        months = await (await fetch("/api/months")).json();
+        apiOk = true;
+      } catch (err) {
+        // Old/static server without the API: fall back to any static options.
+        console.warn("Ay listesi API'si yok, statik seçeneklere düşülüyor:", err);
+        months = Array.from(select.options).map(o => o.value);
+      }
+      if (!Array.isArray(months)) months = [];
+
+      const hasData = months.length > 0;
+
+      // Desired period from ?month=YYYY-MM, else the latest available.
+      const requested = new URLSearchParams(location.search).get("month");
+      const period = months.includes(requested) ? requested : months[0];
+
+      // Rebuild the selector from the discovered months (or a disabled placeholder).
+      select.innerHTML = "";
+      if (hasData) {
+        months.forEach(m => {
+          const opt = document.createElement("option");
+          opt.value = m;
+          opt.textContent = periodLabel(m);
+          if (m === period) opt.selected = true;
+          select.appendChild(opt);
+        });
+      } else {
+        const opt = document.createElement("option");
+        opt.textContent = "Veri yok";
+        opt.disabled = true;
+        opt.selected = true;
+        select.appendChild(opt);
+        select.disabled = true;
+      }
+
+      // Switching month reloads with a clean state (no duplicate listeners).
+      select.addEventListener("change", () => {
+        location.search = `?month=${encodeURIComponent(select.value)}`;
+      });
+
+      // "Veri Çek" button: fetch & import a month's official data on demand.
+      const fetchBtn = document.getElementById("fetch-btn");
+      const fetchLabel = document.getElementById("fetch-btn-label");
+      fetchBtn.addEventListener("click", async () => {
+        const input = prompt("Hangi ayın verisini çekelim? (YYYY-MM)", months[0] || "2026-08");
+        if (!input) return;
+        const match = /^(\d{4})-(\d{1,2})$/.exec(input.trim());
+        if (!match) { alert("Geçersiz format. Örnek: 2026-04"); return; }
+        const [, year, month] = match;
+
+        fetchBtn.disabled = true;
+        fetchLabel.innerText = "Çekiliyor…";
+        try {
+          const res = await fetch(`/api/fetch?year=${year}&month=${Number(month)}`, { method: "POST" });
+          const data = await res.json();
+          if (data.ok) {
+            alert(`✓ ${data.period} çekildi: ${data.rows.toLocaleString("tr-TR")} satır, ${data.documents} belge.`);
+            location.search = `?month=${data.period}`;
+          } else {
+            alert(`Çekilemedi: ${data.error}`);
+          }
+        } catch (err) {
+          alert(`Hata: ${err}`);
+        } finally {
+          fetchBtn.disabled = false;
+          fetchLabel.innerText = "Veri Çek";
+        }
+      });
+
+      // Fresh clone with no data yet: guide the user to the "Veri Çek" button.
+      if (!hasData) {
+        showEmptyState(apiOk);
+        return;
+      }
+
+      // Selected-month tabs (overview, catalog, sources).
+      if (period) await initApp(period);
+
+      // Month-by-month tables need every month loaded and pivoted.
+      await buildPivot(months);
+      initAllPriceRowsTab();
+      initKobiTab();
+      initM2Tab();
+    }
+
+    // Shown on a fresh install before any month has been fetched.
+    function showEmptyState(apiOk) {
+      const main = document.querySelector("main");
+      const header = main.querySelector("header");
+      const banner = document.createElement("div");
+      banner.style.cssText = "margin:2rem 0; padding:2.5rem; border:1px dashed var(--border-color); border-radius:16px; text-align:center; color:var(--text-muted); background:var(--bg-card);";
+      banner.innerHTML = `
+        <h2 style="color:var(--text-primary); margin-bottom:0.75rem;">Henüz veri yok</h2>
+        <p style="line-height:1.6;">
+          Sağ üstteki <strong style="color:var(--color-primary);">“Veri Çek”</strong> butonuna basıp bir ayın resmi YFK verisini indirin.<br>
+          Alternatif olarak terminalden <code style="background:var(--bg-secondary); padding:2px 6px; border-radius:6px;">npm run fetch</code> çalıştırabilirsiniz.
+        </p>
+        ${apiOk ? "" : "<p style='margin-top:1rem; color:var(--color-warning);'>Not: Sunucu API'si bulunamadı — <code>npm run dev</code> ile başlattığınızdan emin olun.</p>"}`;
+      header.insertAdjacentElement("afterend", banner);
+    }
+
+    // Launch application initialization
+    bootstrap();
+  </script>
+</body>
+</html>

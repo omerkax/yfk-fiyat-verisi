@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 
 interface TextItem {
@@ -6,8 +7,14 @@ interface TextItem {
 }
 
 export async function pdfCells(data: Uint8Array): Promise<string[][]> {
+  const standardFontDataUrl = fileURLToPath(new URL("../../node_modules/pdfjs-dist/standard_fonts/", import.meta.url));
   const document = await pdfjs.getDocument(
-    { data, disableWorker: true } as unknown as Parameters<typeof pdfjs.getDocument>[0],
+    {
+      data,
+      disableWorker: true,
+      standardFontDataUrl,
+      verbosity: 0,
+    } as unknown as Parameters<typeof pdfjs.getDocument>[0],
   ).promise;
   const cells: string[][] = [];
 
