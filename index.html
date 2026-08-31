@@ -1094,10 +1094,15 @@
     <section class="tab-content" id="m2-tab">
       <div style="margin-bottom: 1.5rem;">
         <h2 style="font-size:1.4rem; font-weight:800; margin-bottom:0.35rem;">Toplam İnşaat m² Maliyeti</h2>
-        <p style="color: var(--text-muted); font-size:0.95rem; max-width:760px;">
-          Kaba yapı ağırlıklı yaklaşık m² maliyeti. Her kalemin <strong>metrajı</strong> (1 m² inşaata düşen miktar) düzenlenebilir —
-          kendi projenize göre değiştirin, toplam anında güncellenir. Birim fiyatlar en güncel aydan (<span id="m2-period-label">–</span>) alınır. <em>Fiyatlar KDV hariçtir.</em>
+        <p style="color: var(--text-muted); font-size:0.95rem; max-width:820px;">
+          Anahtar teslim yaklaşık m² maliyeti (kaba + ince yapı + çatı/yalıtım + doğrama + tesisat). Tüm pozlar
+          <strong>işçilik dahil</strong> iş kalemidir. Her kalemin <strong>metrajı</strong> (1 m² inşaata düşen miktar)
+          düzenlenebilir — kendi projenize göre değiştirin, toplam anında güncellenir. <em>Fiyatlar KDV hariçtir.</em>
         </p>
+        <div style="display:flex; align-items:center; gap:0.6rem; margin-top:1rem;">
+          <span style="color:var(--text-muted); font-size:0.9rem;">Fiyat ayı:</span>
+          <select class="period-selector" id="m2-month" style="padding:0.4rem 0.8rem;"></select>
+        </div>
       </div>
 
       <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem;">
@@ -1161,23 +1166,44 @@
       { group: "Yıkım", codes: ["15.106.1001", "15.106.1004"] },
     ];
 
-    // Approximate structural ("kaba yapı") m² cost model. `qty` = amount of each
-    // item per 1 m² of construction; fully editable by the user in the UI.
+    // Full anahtar-teslim m² cost model, grouped by phase. Every poz is a
+    // complete work item (labour + material included, not bare rayiç). `qty` =
+    // amount per 1 m² of construction — approximate defaults, fully editable.
     const M2_MODEL = [
-      { label: "Hafriyat (makine ile kazı)", code: "15.120.1001", qty: 0.45 },
-      { label: "Hazır beton C25/30", code: "10.130.1505", qty: 0.40 },
-      { label: "Betonarme demiri (nervürlü)", code: "10.130.1705", qty: 40 },
-      { label: "Kalıp (ahşap seri)", code: "15.180.1001", qty: 2.20 },
-      { label: "Duvar (gazbeton 7,5 cm)", code: "10.130.2502", qty: 1.30 },
-      { label: "Çimento (torbalı)", code: "10.130.1201", qty: 0.03 },
-      { label: "Betoncu ustası (işçilik)", code: "10.100.1015", qty: 1.50 },
-      { label: "Düz işçi", code: "10.100.1062", qty: 3.00 },
-      // İnce yapı (self-contained work items, per m² of construction)
-      { label: "Sıva (çimento, kaba+ince)", code: "15.275.1111", qty: 2.50 },
-      { label: "Şap (2,5 cm, zemin)", code: "15.250.1111", qty: 1.00 },
-      { label: "İç cephe boya (su bazlı)", code: "15.540.1507", qty: 2.50 },
-      { label: "Seramik yer karosu", code: "10.240.3354", qty: 0.30 },
+      { group: "Kaba Yapı", items: [
+        { label: "Hafriyat (makine ile kazı)", code: "15.120.1001", qty: 0.45 },
+        { label: "Grobeton / blokaj", code: "15.210.1004", qty: 0.05 },
+        { label: "Hazır beton dökülmesi (pompa dahil)", code: "15.150.1002", qty: 0.40 },
+        { label: "Betonarme demiri (bükme + montaj)", code: "15.160.1004", qty: 0.040 },
+        { label: "Kalıp (ahşap seri)", code: "15.180.1001", qty: 2.20 },
+        { label: "Tuğla duvar örülmesi", code: "15.220.1122", qty: 1.30 },
+      ]},
+      { group: "İnce Yapı", items: [
+        { label: "Sıva (çimento, kaba+ince)", code: "15.275.1111", qty: 2.50 },
+        { label: "Şap (2,5 cm, zemin)", code: "15.250.1111", qty: 1.00 },
+        { label: "Seramik yer karosu döşenmesi", code: "15.375.1052", qty: 0.35 },
+        { label: "İç cephe boya (su bazlı)", code: "15.540.1507", qty: 2.50 },
+      ]},
+      { group: "Çatı & Yalıtım", items: [
+        { label: "Ahşap oturtma çatı", code: "15.300.1001", qty: 0.25 },
+        { label: "Kiremit çatı örtüsü", code: "15.305.1202", qty: 0.25 },
+        { label: "Su yalıtımı (membran)", code: "15.255.1001", qty: 0.15 },
+        { label: "Mantolama (dış cephe ısı yalıtım)", code: "15.341.1001", qty: 0.80 },
+        { label: "Dış cephe boya", code: "15.540.1602", qty: 0.80 },
+      ]},
+      { group: "Doğrama", items: [
+        { label: "PVC pencere (ısıcam)", code: "15.470.1016", qty: 0.15 },
+        { label: "Ahşap iç kapı", code: "15.510.1101", qty: 0.08 },
+      ]},
+      { group: "Tesisat & Elektrik (yaklaşık)", items: [
+        { label: "Elektrik kablosu (NYM 2×2,5)", code: "30.140.2502", qty: 6.0 },
+        { label: "Temiz su borusu (PPRC ½\")", code: "20.305.4101", qty: 1.5 },
+        { label: "Panel radyatör", code: "20.225.3002", qty: 0.8 },
+        { label: "Lavabo", code: "20.100.1003", qty: 0.03 },
+      ]},
     ];
+    // Flat view for computations.
+    const M2_ITEMS = M2_MODEL.flatMap(g => g.items);
 
     // Constants mapping category technical IDs to display terms
     const CATEGORY_NAMES = {
@@ -1720,52 +1746,81 @@
       render();
     }
 
-    // m² cost tab: quantity-per-m² × latest unit price = cost per m².
+    // m² cost tab: grouped work items, quantity-per-m² × chosen month's price.
     function initM2Tab() {
       const months = pivotData.months;
-      const latest = months[months.length - 1];
       const byCode = new Map(pivotData.rows.map(r => [r.officialCode, r]));
-
-      const label = document.getElementById("m2-period-label");
-      if (label && latest) label.innerText = periodLabel(latest);
-
-      // Working copy of quantities so edits persist.
-      const qty = M2_MODEL.map(m => m.qty);
-      const priceOf = idx => {
-        const row = byCode.get(M2_MODEL[idx].code);
-        return row ? row.prices[latest] : undefined;
-      };
-      const lineCostCells = [];
-
-      // Build rows once; inputs stay stable so focus is never lost while typing.
       const tbody = document.getElementById("m2-table-body");
-      tbody.innerHTML = "";
-      M2_MODEL.forEach((item, idx) => {
-        const row = byCode.get(item.code);
-        const price = priceOf(idx);
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td style="font-weight:600;">${item.label}</td>
-          <td class="code-cell">${item.code}</td>
-          <td>${row ? row.unit : "–"}</td>
-          <td class="price-cell" style="text-align:right; white-space:nowrap;">${price !== undefined ? formatCurrency(price) : "–"}</td>
-          <td style="text-align:right;">
-            <input type="number" step="0.01" min="0" value="${qty[idx]}" data-idx="${idx}"
-              style="width:90px; padding:0.4rem; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); text-align:right;">
-          </td>
-          <td class="price-cell line-cost" style="text-align:right; white-space:nowrap; font-weight:700;"></td>
-        `;
-        tbody.appendChild(tr);
-        lineCostCells[idx] = tr.querySelector(".line-cost");
+
+      // Month selector (newest first, latest default).
+      const monthSelect = document.getElementById("m2-month");
+      monthSelect.innerHTML = "";
+      [...months].reverse().forEach((m, i) => {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = periodLabel(m);
+        if (i === 0) opt.selected = true;
+        monthSelect.appendChild(opt);
       });
+      let selectedMonth = monthSelect.value;
+
+      // Working copy of quantities so edits persist across month switches.
+      const qty = M2_ITEMS.map(m => m.qty);
+      const priceOf = idx => {
+        const row = byCode.get(M2_ITEMS[idx].code);
+        return row ? row.prices[selectedMonth] : undefined;
+      };
+
+      let priceCells = [], lineCostCells = [];
+
+      // Build the grouped table (group header rows + item rows).
+      function build() {
+        tbody.innerHTML = "";
+        priceCells = []; lineCostCells = [];
+        let idx = 0;
+        M2_MODEL.forEach(({ group, items }) => {
+          const gh = document.createElement("tr");
+          gh.innerHTML = `<td colspan="6" style="background: var(--bg-card-hover); font-weight:800; font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color: var(--color-primary);">${group}</td>`;
+          tbody.appendChild(gh);
+
+          items.forEach(item => {
+            const i = idx++;
+            const row = byCode.get(item.code);
+            const price = priceOf(i);
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td style="font-weight:600;">${item.label}</td>
+              <td class="code-cell">${item.code}</td>
+              <td>${row ? row.unit : "–"}</td>
+              <td class="price-cell m2-price" style="text-align:right; white-space:nowrap;">${price !== undefined ? formatCurrency(price) : "–"}</td>
+              <td style="text-align:right;">
+                <input type="number" step="0.001" min="0" value="${qty[i]}" data-idx="${i}"
+                  style="width:90px; padding:0.4rem; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); text-align:right;">
+              </td>
+              <td class="price-cell m2-line" style="text-align:right; white-space:nowrap; font-weight:700;"></td>
+            `;
+            tbody.appendChild(tr);
+            priceCells[i] = tr.querySelector(".m2-price");
+            lineCostCells[i] = tr.querySelector(".m2-line");
+          });
+        });
+
+        tbody.querySelectorAll("input[data-idx]").forEach(input => {
+          input.addEventListener("input", (e) => {
+            qty[Number(e.target.dataset.idx)] = parseFloat(e.target.value) || 0;
+            recalc();
+          });
+        });
+        recalc();
+      }
 
       function recalc() {
         let total = 0;
-        M2_MODEL.forEach((item, idx) => {
-          const price = priceOf(idx);
-          const lineCost = price !== undefined ? price * qty[idx] : 0;
+        M2_ITEMS.forEach((item, i) => {
+          const price = priceOf(i);
+          const lineCost = price !== undefined ? price * qty[i] : 0;
           total += lineCost;
-          lineCostCells[idx].innerText = formatCurrency(lineCost);
+          if (lineCostCells[i]) lineCostCells[i].innerText = formatCurrency(lineCost);
         });
         document.getElementById("m2-foot-total").innerText = formatCurrency(total);
         document.getElementById("m2-total").innerText = formatCurrency(total);
@@ -1773,15 +1828,18 @@
         document.getElementById("m2-grand").innerText = formatCurrency(total * area);
       }
 
-      tbody.querySelectorAll("input[data-idx]").forEach(input => {
-        input.addEventListener("input", (e) => {
-          qty[Number(e.target.dataset.idx)] = parseFloat(e.target.value) || 0;
-          recalc();
+      monthSelect.addEventListener("change", () => {
+        selectedMonth = monthSelect.value;
+        // Prices change with the month → refresh price + line cells.
+        M2_ITEMS.forEach((item, i) => {
+          const price = priceOf(i);
+          if (priceCells[i]) priceCells[i].innerText = price !== undefined ? formatCurrency(price) : "–";
         });
+        recalc();
       });
       document.getElementById("m2-area").addEventListener("input", recalc);
 
-      recalc();
+      build();
     }
 
     // Manifest / Source Audit list logic
