@@ -48,4 +48,23 @@ describe("official price rows", () => {
       priceTry: 1,
     }));
   });
+
+  it("omits a code row without a terminal despite a same-width PDF footer", () => {
+    const cells = [
+      ["10.100.1001", "Taşcı ustası", "", ""],
+      ["", "", "Sayfa", "1"],
+    ];
+
+    expect(toOfficialRows(cells, augustDocument)).toEqual([]);
+  });
+
+  it("does not use a same-width numeric continuation as a terminal", () => {
+    const cells = [
+      ["10.100.1001", "Taşcı", "", ""],
+      ["", "ustası", "Sa", "1"],
+      ["", "", "Sa", "354,41"],
+    ];
+
+    expect(toOfficialRows(cells, augustDocument)).toEqual([]);
+  });
 });

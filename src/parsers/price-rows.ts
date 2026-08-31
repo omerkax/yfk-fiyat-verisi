@@ -1,6 +1,19 @@
 import type { OfficialPriceRow, SourceDocument } from "../types.js";
 
 const OFFICIAL_CODE = /^(?:\d{2}(?:\.\d{3}){2,4}|\d{2}(?:\.\d{3})+\.\d{4})$/;
+const OFFICIAL_UNITS = new Map<string, string>([
+  ["sa", "Sa"],
+  ["m", "m"],
+  ["m²", "m²"],
+  ["m³", "m³"],
+  ["kg", "kg"],
+  ["ton", "Ton"],
+  ["ad", "Ad"],
+  ["takım", "Takım"],
+  ["100 m", "100 m"],
+  ["100 m²", "100 m²"],
+  ["100 m³", "100 m³"],
+]);
 
 export function parseTurkishPrice(value: string): number | null {
   const normalized = value.trim().replace(/\s+/g, "");
@@ -12,69 +25,47 @@ export function parseTurkishPrice(value: string): number | null {
 
 export function toOfficialRows(cells: string[][], document: SourceDocument): OfficialPriceRow[] {
   const rows: OfficialPriceRow[] = [];
-  let candidate: PriceCandidate | undefined;
 
-  const finalizeCandidate = () => {
-    if (!candidate?.terminal) return;
-    const officialName = normalize(candidate.description.join(" "));
-    if (!officialName) return;
+  for (const sourceRow of cells) {
+    const row = sourceRow.map(normalize);
+    const codeIndex = row.findIndex((cell) => OFFICIAL_CODE.test(cell));
+    if (codeIndex < 0) continue;
+
+    const line = row.slice(codeIndex + 1);
+    const terminal = lineTerminal(line);
+    const officialName = normalize(line.slice(0, -2).filter(Boolean).join(" "));
+    if (!terminal || !officialName) continue;
 
     rows.push({
-      officialCode: candidate.officialCode,
+      officialCode: row[codeIndex],
       officialName,
-      unit: candidate.terminal.unit,
-      priceTry: candidate.terminal.priceTry,
+      unit: terminal.unit,
+      priceTry: terminal.priceTry,
       year: document.year,
       month: document.month,
       category: document.category,
       sourceUrl: document.sourceUrl,
     });
-  };
-
-  const appendLine = (line: string[], columnCount: number) => {
-    if (!candidate) return;
-    const terminal = candidate.columnCount === columnCount ? lineTerminal(line) : undefined;
-    if (terminal) {
-      candidate.description.push(...line.slice(0, -2));
-      candidate.terminal = terminal;
-      finalizeCandidate();
-      candidate = undefined;
-      return;
-    }
-    candidate.description.push(...line.filter(Boolean));
-  };
-
-  for (const sourceRow of cells) {
-    const row = sourceRow.map(normalize);
-    const codeIndex = row.findIndex((cell) => OFFICIAL_CODE.test(cell));
-
-    if (codeIndex >= 0) {
-      finalizeCandidate();
-      candidate = { officialCode: row[codeIndex], description: [], columnCount: row.length };
-      appendLine(row.slice(codeIndex + 1), row.length);
-    } else {
-      appendLine(row, row.length);
-    }
   }
-  finalizeCandidate();
 
   return rows;
 }
 
-interface PriceCandidate {
-  officialCode: string;
-  description: string[];
-  columnCount: number;
-  terminal?: { unit: string; priceTry: number };
-}
-
 function lineTerminal(line: string[]): { unit: string; priceTry: number } | undefined {
   if (line.length < 3) return undefined;
-  const unit = line.at(-2);
+  const unit = normalizeOfficialUnit(line.at(-2) ?? "");
   const priceTry = parseTurkishPrice(line.at(-1) ?? "");
   return unit && priceTry !== null ? { unit, priceTry } : undefined;
 }
 
 function normalize(value: string): string {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function normalizeOfficialUnit(value: string): string | undefined {
+  const normalized = normalize(value)
+    .toLocaleLowerCase("tr-TR")
+    .replace(/^(100 )?m2$/, "$1m²")
+    .replace(/^(100 )?m3$/, "$1m³");
+  return OFFICIAL_UNITS.get(normalized);
 }
