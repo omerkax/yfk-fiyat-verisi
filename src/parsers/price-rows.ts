@@ -12,24 +12,18 @@ export function parseTurkishPrice(value: string): number | null {
 
 export function toOfficialRows(cells: string[][], document: SourceDocument): OfficialPriceRow[] {
   const rows: OfficialPriceRow[] = [];
-  let candidate: string[] | undefined;
+  let candidate: PriceCandidate | undefined;
 
-  const acceptCandidate = () => {
-    if (!candidate) return;
-    const priceIndex = findPriceIndex(candidate);
-    if (priceIndex === undefined || priceIndex < 2) return;
-
-    const priceTry = parseTurkishPrice(candidate[priceIndex]);
-    const unit = normalize(candidate[priceIndex - 1]);
-    const officialName = normalize(candidate.slice(1, priceIndex - 1).join(" "));
-    const officialCode = candidate[0];
-    if (!officialName || !unit || priceTry === null) return;
+  const finalizeCandidate = () => {
+    if (!candidate?.terminal) return;
+    const officialName = normalize(candidate.description.join(" "));
+    if (!officialName) return;
 
     rows.push({
-      officialCode,
+      officialCode: candidate.officialCode,
       officialName,
-      unit,
-      priceTry,
+      unit: candidate.terminal.unit,
+      priceTry: candidate.terminal.priceTry,
       year: document.year,
       month: document.month,
       category: document.category,
@@ -37,27 +31,48 @@ export function toOfficialRows(cells: string[][], document: SourceDocument): Off
     });
   };
 
+  const appendLine = (line: string[], columnCount: number) => {
+    if (!candidate) return;
+    const terminal = candidate.columnCount === columnCount ? lineTerminal(line) : undefined;
+    if (terminal) {
+      candidate.description.push(...line.slice(0, -2));
+      candidate.terminal = terminal;
+      finalizeCandidate();
+      candidate = undefined;
+      return;
+    }
+    candidate.description.push(...line.filter(Boolean));
+  };
+
   for (const sourceRow of cells) {
-    const row = sourceRow.map(normalize).filter(Boolean);
+    const row = sourceRow.map(normalize);
     const codeIndex = row.findIndex((cell) => OFFICIAL_CODE.test(cell));
 
     if (codeIndex >= 0) {
-      acceptCandidate();
-      candidate = [row[codeIndex], ...row.slice(codeIndex + 1)];
-    } else if (candidate) {
-      candidate.push(...row);
+      finalizeCandidate();
+      candidate = { officialCode: row[codeIndex], description: [], columnCount: row.length };
+      appendLine(row.slice(codeIndex + 1), row.length);
+    } else {
+      appendLine(row, row.length);
     }
   }
-  acceptCandidate();
+  finalizeCandidate();
 
   return rows;
 }
 
-function findPriceIndex(candidate: string[]): number | undefined {
-  for (let index = candidate.length - 1; index > 0; index -= 1) {
-    if (parseTurkishPrice(candidate[index]) !== null) return index;
-  }
-  return undefined;
+interface PriceCandidate {
+  officialCode: string;
+  description: string[];
+  columnCount: number;
+  terminal?: { unit: string; priceTry: number };
+}
+
+function lineTerminal(line: string[]): { unit: string; priceTry: number } | undefined {
+  if (line.length < 3) return undefined;
+  const unit = line.at(-2);
+  const priceTry = parseTurkishPrice(line.at(-1) ?? "");
+  return unit && priceTry !== null ? { unit, priceTry } : undefined;
 }
 
 function normalize(value: string): string {

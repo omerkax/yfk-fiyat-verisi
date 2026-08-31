@@ -31,4 +31,21 @@ describe("official price rows", () => {
       category: "construction-rayic", sourceUrl: augustDocument.sourceUrl,
     });
   });
+
+  it("does not let a PDF footer replace a row price", async () => {
+    const cells = [
+      ...(await fixtureCells()),
+      ["Sayfa", "1"],
+    ];
+
+    expect(toOfficialRows(cells, augustDocument)).toContainEqual({
+      officialCode: "10.100.1001", officialName: "Taşcı ustası", unit: "Sa",
+      priceTry: 354.41, year: 2026, month: 8,
+      category: "construction-rayic", sourceUrl: augustDocument.sourceUrl,
+    });
+    expect(toOfficialRows(cells, augustDocument)).not.toContainEqual(expect.objectContaining({
+      officialCode: "10.100.1001",
+      priceTry: 1,
+    }));
+  });
 });

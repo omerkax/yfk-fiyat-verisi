@@ -11,16 +11,20 @@ export async function pdfCells(data: Uint8Array): Promise<string[][]> {
   ).promise;
   const cells: string[][] = [];
 
-  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-    const page = await document.getPage(pageNumber);
-    const content = await page.getTextContent();
-    const items = content.items.filter(isTextItem) as unknown as TextItem[];
-    const lines = groupByY(items);
-    cells.push(...lines.map((line) => line.sort((a, b) => a.transform[4] - b.transform[4])
-      .map((item) => item.str)));
-  }
+  try {
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+      const page = await document.getPage(pageNumber);
+      const content = await page.getTextContent();
+      const items = content.items.filter(isTextItem) as unknown as TextItem[];
+      const lines = groupByY(items);
+      cells.push(...lines.map((line) => line.sort((a, b) => a.transform[4] - b.transform[4])
+        .map((item) => item.str)));
+    }
 
-  return cells;
+    return cells;
+  } finally {
+    await document.destroy();
+  }
 }
 
 function isTextItem(item: unknown): item is TextItem {
