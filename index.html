@@ -1106,18 +1106,31 @@
       </div>
 
       <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem;">
-        <div class="kpi-card" style="flex:1; min-width:240px;">
-          <div class="kpi-title">TOPLAM m² MALİYETİ</div>
-          <div class="kpi-value" id="m2-total">₺0</div>
-          <div class="kpi-desc">Seçili metrajlarla, KDV hariç</div>
+        <div class="kpi-card" style="flex:1; min-width:210px;">
+          <div class="kpi-title">DOĞRUDAN İMALAT (₺/m²)</div>
+          <div class="kpi-value" id="m2-total" style="font-size:1.6rem;">₺0</div>
+          <div class="kpi-desc">Poz × metraj, KDV hariç</div>
         </div>
-        <div class="kpi-card" style="flex:1; min-width:240px;">
+        <div class="kpi-card" style="flex:1; min-width:210px;">
+          <div class="kpi-title">GENEL GİDER + KÂR</div>
+          <div style="display:flex; align-items:center; gap:0.5rem; margin:0.5rem 0;">
+            <input type="number" id="m2-overhead" value="15" min="0" step="1" style="width:70px; padding:0.5rem; border-radius:10px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); font-size:1rem;">
+            <span style="color:var(--text-muted);">% şantiye/öngörülmeyen</span>
+          </div>
+          <div class="kpi-desc">Anahtar teslime yaklaştırır</div>
+        </div>
+        <div class="kpi-card" style="flex:1; min-width:210px;">
+          <div class="kpi-title">TOPLAM m² MALİYETİ</div>
+          <div class="kpi-value" id="m2-withoverhead" style="color:var(--color-primary);">₺0</div>
+          <div class="kpi-desc">Genel gider dahil</div>
+        </div>
+        <div class="kpi-card" style="flex:1; min-width:210px;">
           <div class="kpi-title">TAHMİNİ TOPLAM (ALAN × m²)</div>
           <div style="display:flex; align-items:center; gap:0.5rem; margin:0.5rem 0;">
-            <input type="number" id="m2-area" value="100" min="0" style="width:110px; padding:0.5rem; border-radius:10px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); font-size:1rem;">
-            <span style="color:var(--text-muted);">m² için</span>
+            <input type="number" id="m2-area" value="100" min="0" style="width:100px; padding:0.5rem; border-radius:10px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); font-size:1rem;">
+            <span style="color:var(--text-muted);">m²</span>
           </div>
-          <div class="kpi-value" id="m2-grand" style="font-size:1.5rem;">₺0</div>
+          <div class="kpi-value" id="m2-grand" style="font-size:1.4rem;">₺0</div>
         </div>
       </div>
 
@@ -1171,49 +1184,53 @@
     // amount per 1 m² of construction — approximate defaults, fully editable.
     const M2_MODEL = [
       { group: "Kaba Yapı", items: [
-        { label: "Hafriyat (makine ile kazı)", code: "15.120.1001", qty: 0.45 },
+        { label: "Hafriyat (makine ile kazı)", code: "15.120.1001", qty: 0.60 },
         { label: "Grobeton / blokaj", code: "15.210.1004", qty: 0.05 },
-        { label: "Hazır beton dökülmesi (pompa dahil)", code: "15.150.1002", qty: 0.40 },
-        { label: "Betonarme demiri (bükme + montaj)", code: "15.160.1004", qty: 0.040 },
-        { label: "Kalıp (ahşap seri)", code: "15.180.1001", qty: 2.20 },
-        { label: "Tuğla duvar örülmesi", code: "15.220.1122", qty: 1.30 },
+        { label: "Hazır beton dökülmesi (pompa dahil)", code: "15.150.1002", qty: 0.48 },
+        { label: "Betonarme demiri (bükme + montaj)", code: "15.160.1004", qty: 0.055 },
+        { label: "Kalıp (ahşap seri)", code: "15.180.1001", qty: 2.70 },
+        { label: "Tuğla duvar örülmesi", code: "15.220.1122", qty: 1.80 },
       ]},
       { group: "İnce Yapı", items: [
-        { label: "Sıva (çimento, kaba+ince)", code: "15.275.1111", qty: 2.50 },
+        { label: "Çimento sıva (ıslak hacim/dış)", code: "15.275.1111", qty: 0.80 },
+        { label: "Alçı sıva (perlitli + saten)", code: "15.280.1009", qty: 2.70 },
         { label: "Şap (2,5 cm, zemin)", code: "15.250.1111", qty: 1.00 },
-        { label: "Seramik yer karosu döşenmesi", code: "15.375.1052", qty: 0.35 },
-        { label: "İç cephe boya (su bazlı)", code: "15.540.1507", qty: 2.50 },
+        { label: "Seramik / fayans kaplama", code: "15.375.1052", qty: 0.60 },
+        { label: "Laminat parke", code: "15.490.1002", qty: 0.55 },
+        { label: "İç cephe boya (su bazlı)", code: "15.540.1507", qty: 3.00 },
+        { label: "Süpürgelik (PVC)", code: "10.240.6051", qty: 0.90 },
       ]},
       { group: "Çatı & Yalıtım", items: [
-        { label: "Ahşap oturtma çatı", code: "15.300.1001", qty: 0.25 },
-        { label: "Kiremit çatı örtüsü", code: "15.305.1202", qty: 0.25 },
-        { label: "Su yalıtımı (membran)", code: "15.255.1001", qty: 0.15 },
-        { label: "Mantolama (dış cephe ısı yalıtım)", code: "15.341.1001", qty: 0.80 },
-        { label: "Dış cephe boya", code: "15.540.1602", qty: 0.80 },
+        { label: "Ahşap oturtma çatı", code: "15.300.1001", qty: 0.28 },
+        { label: "Kiremit çatı örtüsü", code: "15.305.1202", qty: 0.28 },
+        { label: "Su yalıtımı (membran)", code: "15.255.1001", qty: 0.30 },
+        { label: "Mantolama (dış cephe ısı yalıtım)", code: "15.341.1001", qty: 0.75 },
+        { label: "Dış cephe boya", code: "15.540.1602", qty: 0.75 },
       ]},
       { group: "Doğrama", items: [
-        { label: "PVC pencere (ısıcam)", code: "15.470.1016", qty: 0.15 },
-        { label: "Ahşap iç kapı", code: "15.510.1101", qty: 0.08 },
+        { label: "PVC pencere (ısıcam)", code: "15.470.1016", qty: 0.18 },
+        { label: "Ahşap iç kapı", code: "15.510.1101", qty: 0.10 },
+        { label: "Demir korkuluk (merdiven/balkon)", code: "15.550.1203", qty: 2.00 },
       ]},
-      { group: "Elektrik (yaklaşık)", items: [
-        { label: "Elektrik kablosu (NYM 2×2,5)", code: "30.140.2502", qty: 6.0 },
-        { label: "Topraklı priz (gömme)", code: "30.185.1201", qty: 0.15 },
-        { label: "Anahtar (komütatör)", code: "30.185.1102", qty: 0.10 },
-        { label: "LED tavan armatürü", code: "30.170.1101", qty: 0.10 },
-        { label: "Dağıtım panosu", code: "30.100.1101", qty: 0.003 },
+      { group: "Elektrik", items: [
+        { label: "Elektrik kablosu (NYM 2×2,5)", code: "30.140.2502", qty: 18.0 },
+        { label: "Topraklı priz (gömme)", code: "30.185.1201", qty: 0.25 },
+        { label: "Anahtar (komütatör)", code: "30.185.1102", qty: 0.15 },
+        { label: "LED tavan armatürü", code: "30.170.1101", qty: 0.20 },
+        { label: "Dağıtım panosu", code: "30.100.1101", qty: 0.005 },
       ]},
-      { group: "Mekanik / Isıtma (yaklaşık)", items: [
-        { label: "Temiz su borusu (PPRC ½\")", code: "20.305.4101", qty: 1.5 },
-        { label: "Panel radyatör", code: "20.225.3002", qty: 0.8 },
-        { label: "Çelik doğalgaz borusu (½\")", code: "10.440.3600", qty: 0.5 },
-        { label: "Hermetik şofben / ısıtıcı", code: "20.175.4201", qty: 0.006 },
+      { group: "Mekanik / Isıtma", items: [
+        { label: "Temiz su borusu (PPRC ½\")", code: "20.305.4101", qty: 2.50 },
+        { label: "Panel radyatör", code: "20.225.3002", qty: 1.20 },
+        { label: "Çelik doğalgaz borusu (½\")", code: "10.440.3600", qty: 0.60 },
+        { label: "Hermetik şofben / ısıtıcı", code: "20.175.4201", qty: 0.008 },
       ]},
-      { group: "Sıhhi Gereçler (yaklaşık)", items: [
-        { label: "Asma alafranga klozet", code: "20.112.1005", qty: 0.02 },
-        { label: "Gömme rezervuar seti", code: "20.112.1004", qty: 0.02 },
-        { label: "Lavabo", code: "20.100.1003", qty: 0.03 },
-        { label: "Lavabo bataryası", code: "20.120.1101", qty: 0.03 },
-        { label: "Mutfak eviyesi", code: "20.118.1102", qty: 0.008 },
+      { group: "Sıhhi Gereçler", items: [
+        { label: "Asma alafranga klozet", code: "20.112.1005", qty: 0.025 },
+        { label: "Gömme rezervuar seti", code: "20.112.1004", qty: 0.025 },
+        { label: "Lavabo", code: "20.100.1003", qty: 0.030 },
+        { label: "Lavabo / eviye bataryası", code: "20.120.1101", qty: 0.050 },
+        { label: "Mutfak eviyesi", code: "20.118.1102", qty: 0.010 },
       ]},
     ];
     // Flat view for computations.
@@ -1829,17 +1846,20 @@
       }
 
       function recalc() {
-        let total = 0;
+        let direct = 0;
         M2_ITEMS.forEach((item, i) => {
           const price = priceOf(i);
           const lineCost = price !== undefined ? price * qty[i] : 0;
-          total += lineCost;
+          direct += lineCost;
           if (lineCostCells[i]) lineCostCells[i].innerText = formatCurrency(lineCost);
         });
-        document.getElementById("m2-foot-total").innerText = formatCurrency(total);
-        document.getElementById("m2-total").innerText = formatCurrency(total);
+        const overheadPct = parseFloat(document.getElementById("m2-overhead").value) || 0;
+        const withOverhead = direct * (1 + overheadPct / 100);
+        document.getElementById("m2-foot-total").innerText = formatCurrency(direct);
+        document.getElementById("m2-total").innerText = formatCurrency(direct);
+        document.getElementById("m2-withoverhead").innerText = formatCurrency(withOverhead);
         const area = parseFloat(document.getElementById("m2-area").value) || 0;
-        document.getElementById("m2-grand").innerText = formatCurrency(total * area);
+        document.getElementById("m2-grand").innerText = formatCurrency(withOverhead * area);
       }
 
       monthSelect.addEventListener("change", () => {
@@ -1852,6 +1872,7 @@
         recalc();
       });
       document.getElementById("m2-area").addEventListener("input", recalc);
+      document.getElementById("m2-overhead").addEventListener("input", recalc);
 
       build();
     }
