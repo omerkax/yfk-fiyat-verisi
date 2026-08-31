@@ -1,8 +1,9 @@
 import { load } from "cheerio";
+import { resolveOfficialUrl } from "../config.js";
 
 export type MonthEntry =
-  | { kind: "announcement"; url: string }
-  | { kind: "document"; url: string };
+  | { kind: "announcement"; url: string; year: number; month: number }
+  | { kind: "document"; url: string; year: number; month: number };
 
 const TURKISH_MONTHS: Record<string, number> = {
   ocak: 1,
@@ -34,7 +35,7 @@ export function findMonthEntry(html: string, year: number, month: number): Month
   const heading = $("h1, h2, h3, h4, h5, h6").filter((_, element) =>
     $(element).text().includes(String(year)),
   ).first();
-  const table = heading.parent().find("table").first();
+  const table = tableFollowingHeading($, heading);
 
   if (!heading.length || !table.length) {
     throw new Error(`No official monthly table found for ${year}`);
@@ -48,6 +49,17 @@ export function findMonthEntry(html: string, year: number, month: number): Month
 
   if (!row.length || !href) throw new Error(`No official entry found for ${year}-${month}`);
 
-  const url = new URL(href, "https://yfk.csb.gov.tr").toString();
-  return { kind: isDirectDocument(url) ? "document" : "announcement", url };
+  const url = resolveOfficialUrl(href, "https://yfk.csb.gov.tr");
+  return { kind: isDirectDocument(url) ? "document" : "announcement", url, year, month };
+}
+
+function tableFollowingHeading($: ReturnType<typeof load>, heading: ReturnType<ReturnType<typeof load>>): ReturnType<ReturnType<typeof load>> {
+  let sibling = heading.next();
+  while (sibling.length) {
+    if (sibling.is("h1, h2, h3, h4, h5, h6")) break;
+    const table = sibling.is("table") ? sibling : sibling.find("table").first();
+    if (table.length) return table;
+    sibling = sibling.next();
+  }
+  return $([]);
 }

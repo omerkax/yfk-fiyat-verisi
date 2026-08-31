@@ -1,9 +1,14 @@
 import { load } from "cheerio";
-import { FORMAT_RANK } from "../config.js";
+import { FORMAT_RANK, resolveOfficialUrl } from "../config.js";
 import type { SourceCategory, SourceDocument, SourceFormat } from "../types.js";
 import type { MonthEntry } from "./monthly-index.js";
 
-export type FetchText = (url: string) => Promise<string>;
+export interface DiscoveryPage {
+  html: string;
+  attachmentContentTypes?: Record<string, string>;
+}
+
+export type FetchText = (url: string) => Promise<string | DiscoveryPage>;
 
 const CATEGORY_PATTERNS: Array<[SourceCategory, RegExp]> = [
   ["construction-rayic", /insaat.*rayic/],
@@ -58,7 +63,8 @@ export async function discoverMonthlyDocuments(
 ): Promise<SourceDocument[]> {
   if (entry.kind === "document") return [];
 
-  const html = await fetchText(entry.url);
+  const page = await fetchText(entry.url);
+  const { html, attachmentContentTypes = {} } = typeof page === "string" ? { html: page } : page;
   const $ = load(html);
   const documents: SourceDocument[] = [];
 
@@ -67,13 +73,18 @@ export async function discoverMonthlyDocuments(
     const href = $(element).attr("href");
     if (!category || !href) return;
 
-    const sourceUrl = new URL(href, entry.url).toString();
-    const format = sourceFormat(sourceUrl, $(element).attr("type"));
+    let sourceUrl: string;
+    try {
+      sourceUrl = resolveOfficialUrl(href, entry.url);
+    } catch {
+      return;
+    }
+    const format = sourceFormat(sourceUrl, attachmentContentTypes[sourceUrl] ?? $(element).attr("type"));
     if (!format) return;
 
     documents.push({
-      year: yearFromUrl(entry.url),
-      month: monthFromUrl(entry.url),
+      year: entry.year,
+      month: entry.month,
       category,
       sourceUrl,
       format,
@@ -82,21 +93,4 @@ export async function discoverMonthlyDocuments(
   });
 
   return selectPreferredDocuments(documents);
-}
-
-function yearFromUrl(url: string): number {
-  const year = new URL(url).pathname.match(/(?:19|20)\d{2}/)?.[0];
-  if (!year) throw new Error(`Unable to infer year from announcement URL: ${url}`);
-  return Number(year);
-}
-
-function monthFromUrl(url: string): number {
-  const months: Record<string, number> = {
-    ocak: 1, subat: 2, mart: 3, nisan: 4, mayis: 5, haziran: 6,
-    temmuz: 7, agustos: 8, augustos: 8, eylul: 9, ekim: 10, kasim: 11, aralik: 12,
-  };
-  const normalized = normalizeLabel(new URL(url).pathname);
-  const month = Object.entries(months).find(([label]) => normalized.includes(label))?.[1];
-  if (!month) throw new Error(`Unable to infer month from announcement URL: ${url}`);
-  return month;
 }
