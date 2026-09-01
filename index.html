@@ -1131,6 +1131,10 @@
             <span style="color:var(--text-muted);">m²</span>
           </div>
           <div class="kpi-value" id="m2-grand" style="font-size:1.4rem;">₺0</div>
+          <button id="m2-keshif-btn" class="period-selector" style="margin-top:0.75rem; cursor:pointer; border:none; width:100%; justify-content:center; display:flex; align-items:center; gap:0.4rem; font-weight:700;">
+            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            Toplam Keşif Çıkar
+          </button>
         </div>
       </div>
 
@@ -1152,6 +1156,27 @@
             </tr>
           </tfoot>
         </table>
+      </div>
+
+      <!-- Detailed project quantity/cost estimate (keşif), generated on demand -->
+      <div id="m2-keshif-wrap" style="display:none; margin-top:2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;">
+          <h3 id="m2-keshif-title" style="font-size:1.2rem; font-weight:800;">Toplam Keşif</h3>
+          <button id="m2-keshif-print" class="period-selector" style="cursor:pointer; border:none;">Yazdır / PDF</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Kalem</th><th>Poz No</th><th>Birim</th>
+                <th style="text-align:right;">Birim Fiyat</th>
+                <th style="text-align:right;">Toplam Miktar</th>
+                <th style="text-align:right;">Toplam Tutar</th>
+              </tr>
+            </thead>
+            <tbody id="m2-keshif-body"><!-- injected --></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -1886,6 +1911,63 @@
       });
       document.getElementById("m2-area").addEventListener("input", recalc);
       document.getElementById("m2-overhead").addEventListener("input", recalc);
+
+      // "Toplam Keşif Çıkar": item-by-item cost for the entered total area & month.
+      function buildKeshif() {
+        const area = parseFloat(document.getElementById("m2-area").value) || 0;
+        const overheadPct = parseFloat(document.getElementById("m2-overhead").value) || 0;
+        const body = document.getElementById("m2-keshif-body");
+        const fmtQty = n => n.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+        body.innerHTML = "";
+        let direct = 0, idx = 0;
+
+        M2_MODEL.forEach(({ group, items }) => {
+          const gh = document.createElement("tr");
+          gh.innerHTML = `<td colspan="6" style="background:var(--bg-card-hover); font-weight:800; text-transform:uppercase; font-size:0.8rem; letter-spacing:0.04em; color:var(--color-primary);">${group}</td>`;
+          body.appendChild(gh);
+          let groupTotal = 0;
+          items.forEach(item => {
+            const i = idx++;
+            const row = byCode.get(item.code);
+            const price = priceOf(i);
+            const totalQty = qty[i] * area;
+            const totalCost = (price !== undefined ? price : 0) * qty[i] * area;
+            groupTotal += totalCost; direct += totalCost;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td style="font-weight:600;">${item.label}</td>
+              <td class="code-cell">${item.code}</td>
+              <td>${row ? row.unit : "–"}</td>
+              <td class="price-cell" style="text-align:right; white-space:nowrap;">${price !== undefined ? formatCurrency(price) : "–"}</td>
+              <td style="text-align:right; white-space:nowrap;">${fmtQty(totalQty)} ${row ? row.unit : ""}</td>
+              <td class="price-cell" style="text-align:right; white-space:nowrap; font-weight:600;">${formatCurrency(totalCost)}</td>`;
+            body.appendChild(tr);
+          });
+          const st = document.createElement("tr");
+          st.innerHTML = `<td colspan="5" style="text-align:right; font-weight:700; color:var(--text-muted);">${group} ara toplam</td><td class="price-cell" style="text-align:right; font-weight:700;">${formatCurrency(groupTotal)}</td>`;
+          body.appendChild(st);
+        });
+
+        const overhead = direct * overheadPct / 100;
+        [["Doğrudan imalat toplamı", direct, false],
+         [`Genel gider (%${overheadPct})`, overhead, false],
+         ["GENEL TOPLAM", direct + overhead, true]].forEach(([label, val, big]) => {
+          const tr = document.createElement("tr");
+          const fw = big ? 800 : 700;
+          const extra = big ? "color:var(--color-primary); font-size:1.1rem;" : "";
+          tr.innerHTML = `<td colspan="5" style="text-align:right; font-weight:${fw}; ${extra}">${label}</td><td class="price-cell" style="text-align:right; font-weight:${fw}; ${extra}">${formatCurrency(val)}</td>`;
+          body.appendChild(tr);
+        });
+
+        document.getElementById("m2-keshif-title").innerText =
+          `Toplam Keşif — ${fmtQty(area)} m² · ${periodLabel(selectedMonth)} · ₺${formatCurrency(direct + overhead).replace("₺","")}`;
+        const wrap = document.getElementById("m2-keshif-wrap");
+        wrap.style.display = "block";
+        wrap.scrollIntoView({ behavior: "smooth" });
+      }
+
+      document.getElementById("m2-keshif-btn").addEventListener("click", buildKeshif);
+      document.getElementById("m2-keshif-print").addEventListener("click", () => window.print());
 
       build();
     }
