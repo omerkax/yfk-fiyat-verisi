@@ -832,6 +832,33 @@
       color: var(--text-muted);
       font-weight: 600;
     }
+
+    /* Print: show only the keşif, on clean white paper */
+    @media print {
+      @page { margin: 12mm; size: A4 portrait; }
+      body { background: #fff !important; }
+      aside, main > header, main > .kpi-grid { display: none !important; }
+      /* inside the m² tab, keep only the keşif output */
+      #m2-tab > *:not(#m2-keshif-wrap) { display: none !important; }
+      #m2-keshif-print { display: none !important; }
+      #m2-keshif-wrap { display: block !important; margin: 0 !important; }
+      #m2-keshif-wrap h3 { color: #000 !important; font-size: 15px !important; }
+      #m2-keshif-sub { color: #333 !important; font-size: 10px !important; }
+      #m2-keshif-wrap .table-container {
+        border: none !important; background: #fff !important;
+        overflow: visible !important; border-radius: 0 !important;
+      }
+      #m2-keshif-wrap table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+      #m2-keshif-wrap th, #m2-keshif-wrap td {
+        color: #000 !important; background: #fff !important;
+        border: 1px solid #b0b0b0 !important; padding: 3px 6px !important;
+        white-space: normal !important;
+      }
+      #m2-keshif-wrap thead th { background: #e8e8e8 !important; font-weight: 700; }
+      #m2-keshif-body td[colspan] { background: #f2f2f2 !important; font-weight: 700 !important; }
+      #m2-keshif-body tr { break-inside: avoid; }
+      #m2-keshif-wrap .code-cell, #m2-keshif-wrap .price-cell { color: #000 !important; }
+    }
   </style>
 </head>
 <body>
@@ -1160,8 +1187,11 @@
 
       <!-- Detailed project quantity/cost estimate (keşif), generated on demand -->
       <div id="m2-keshif-wrap" style="display:none; margin-top:2rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;">
-          <h3 id="m2-keshif-title" style="font-size:1.2rem; font-weight:800;">Toplam Keşif</h3>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;">
+          <div>
+            <h3 id="m2-keshif-title" style="font-size:1.2rem; font-weight:800;">Toplam Keşif</h3>
+            <div id="m2-keshif-sub" style="color:var(--text-muted); font-size:0.85rem; margin-top:0.25rem;"></div>
+          </div>
           <button id="m2-keshif-print" class="period-selector" style="cursor:pointer; border:none;">Yazdır / PDF</button>
         </div>
         <div class="table-container">
@@ -1960,7 +1990,9 @@
         });
 
         document.getElementById("m2-keshif-title").innerText =
-          `Toplam Keşif — ${fmtQty(area)} m² · ${periodLabel(selectedMonth)} · ₺${formatCurrency(direct + overhead).replace("₺","")}`;
+          `Toplam İnşaat Keşfi — ${fmtQty(area)} m²`;
+        document.getElementById("m2-keshif-sub").innerText =
+          `${periodLabel(selectedMonth)} YFK birim fiyatları · Genel toplam ${formatCurrency(direct + overhead)} · Fiyatlar KDV hariç · ${new Date().toLocaleDateString("tr-TR")}`;
         const wrap = document.getElementById("m2-keshif-wrap");
         wrap.style.display = "block";
         wrap.scrollIntoView({ behavior: "smooth" });
