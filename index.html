@@ -1114,7 +1114,7 @@
         <div class="kpi-card" style="flex:1; min-width:210px;">
           <div class="kpi-title">GENEL GİDER + KÂR</div>
           <div style="display:flex; align-items:center; gap:0.5rem; margin:0.5rem 0;">
-            <input type="number" id="m2-overhead" value="20" min="0" step="1" style="width:70px; padding:0.5rem; border-radius:10px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); font-size:1rem;">
+            <input type="number" id="m2-overhead" value="10" min="0" step="1" style="width:70px; padding:0.5rem; border-radius:10px; border:1px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); font-size:1rem;">
             <span style="color:var(--text-muted);">% şantiye/öngörülmeyen</span>
           </div>
           <div class="kpi-desc">Anahtar teslime yaklaştırır</div>
@@ -1195,10 +1195,16 @@
         { label: "Çimento sıva (ıslak hacim/dış)", code: "15.275.1111", qty: 0.80 },
         { label: "Alçı sıva (perlitli + saten)", code: "15.280.1009", qty: 2.70 },
         { label: "Şap (2,5 cm, zemin)", code: "15.250.1111", qty: 1.00 },
-        { label: "Seramik / fayans kaplama", code: "15.375.1052", qty: 0.60 },
+        { label: "Seramik yer karosu", code: "15.375.1052", qty: 0.45 },
+        { label: "Duvar seramiği (banyo/mutfak)", code: "15.380.1003", qty: 0.35 },
         { label: "Laminat parke", code: "15.490.1002", qty: 0.55 },
+        { label: "Alçıpan asma tavan", code: "15.530.1901", qty: 0.35 },
         { label: "İç cephe boya (su bazlı)", code: "15.540.1507", qty: 3.00 },
         { label: "Süpürgelik (PVC)", code: "10.240.6051", qty: 0.90 },
+      ]},
+      { group: "Mermer / Doğaltaş", items: [
+        { label: "Mermer merdiven basamağı", code: "15.410.1311", qty: 0.30 },
+        { label: "Mermer denizlik / harpuşta", code: "10.240.5301", qty: 0.05 },
       ]},
       { group: "Çatı & Yalıtım", items: [
         { label: "Ahşap oturtma çatı", code: "15.300.1001", qty: 0.28 },
@@ -1218,12 +1224,14 @@
         { label: "Anahtar (komütatör)", code: "30.185.1102", qty: 0.15 },
         { label: "LED tavan armatürü", code: "30.170.1101", qty: 0.20 },
         { label: "Dağıtım panosu", code: "30.100.1101", qty: 0.005 },
+        { label: "Görüntülü diafon", code: "30.491.1101", qty: 0.008 },
+        { label: "Data / TV prizi (CAT6)", code: "30.190.1704", qty: 0.08 },
       ]},
       { group: "Mekanik / Isıtma", items: [
         { label: "Temiz su borusu (PPRC ½\")", code: "20.305.4101", qty: 2.50 },
         { label: "Panel radyatör", code: "20.225.3002", qty: 1.20 },
         { label: "Çelik doğalgaz borusu (½\")", code: "10.440.3600", qty: 0.60 },
-        { label: "Hermetik şofben / ısıtıcı", code: "20.175.4201", qty: 0.008 },
+        { label: "Yoğuşmalı kombi (gaz yakıtlı)", code: "20.214.1001", qty: 0.008 },
       ]},
       { group: "Sıhhi Gereçler", items: [
         { label: "Asma alafranga klozet", code: "20.112.1005", qty: 0.025 },
